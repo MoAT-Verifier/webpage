@@ -8,17 +8,13 @@ import { ArrowLeft, Compass, House, Search, ShieldAlert } from "@lucide/astro";
   <section class="site-container py-14 md:py-24">
     <div class="grid min-h-[62vh] items-center gap-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(420px,1fr)]">
       <div>
-        <p class="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary dark:border-primary-light/20 dark:bg-primary-light/10 dark:text-primary-light">
-          <ShieldAlert size={14} />
-          Error 404
-        </p>
 
         <h1 class="max-w-2xl font-brand text-5xl leading-[1.04] tracking-normal text-neutral-800 dark:text-neutral-100 md:text-6xl">
           This route does not have a page yet.
         </h1>
 
         <p class="mt-5 max-w-xl text-base leading-8 text-neutral-600 dark:text-neutral-300">
-			The link may be outdated or mistyped. Start again from the About page, or head straight to the approach, the evaluation, or the publications.
+			The link may be outdated, mistyped, or still waiting to be built. Start again from one of the documented starter routes.
         </p>
 
         <div class="mt-7 flex flex-wrap gap-3">
@@ -26,6 +22,10 @@ import { ArrowLeft, Compass, House, Search, ShieldAlert } from "@lucide/astro";
             <ArrowLeft size={16} /> Back to Home
           </Button>
         </div>
+
+        <p class="mt-9 max-w-xl rounded-xl border border-dashed border-primary/20 bg-primary/5 px-4 py-3 text-sm leading-7 text-neutral-600 dark:border-primary-light/20 dark:bg-primary-light/5 dark:text-neutral-300">
+          <span class="font-medium text-primary dark:text-primary-light">Model Checker's Note:</span> We verified <span class="font-medium text-primary dark:text-primary-light">G</span> (request → <span class="font-medium text-primary dark:text-primary-light">F</span> response) for this site. Nobody ever said the response had to be a 200.
+        </p>
 
       </div>
 
@@ -59,13 +59,13 @@ import { ArrowLeft, Compass, House, Search, ShieldAlert } from "@lucide/astro";
               </div>
             </div>
 
-            <div class="my-8 flex items-center justify-center">
+            <div class="my-10 flex items-center justify-center">
               <div class="relative h-32 w-full max-w-sm">
                 <div class="absolute left-4 top-1/2 h-px w-[calc(100%-2rem)] border-t border-dashed border-neutral-300 dark:border-neutral-600"></div>
                 <div class="absolute left-0 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-xl border border-primary/20 bg-white text-primary shadow-sm dark:border-primary-light/25 dark:bg-neutral-900 dark:text-primary-light">
                   <House size={18} />
                 </div>
-                <div class="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-2xl border border-dashed border-red-300 bg-red-50 text-red-500 dark:border-red-900/70 dark:bg-red-950/25 dark:text-red-300">
+                <div class="absolute left-1/2 top-1/2 flex h-20 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-2xl border border-dashed border-red-300 bg-red-50 px-3 text-red-500 dark:border-red-900/70 dark:bg-red-950/25 dark:text-red-300">
                   <span class="font-brand text-3xl leading-none">404</span>
                 </div>
                 <div class="absolute right-0 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-xl border border-primary/20 bg-white text-primary shadow-sm dark:border-primary-light/25 dark:bg-neutral-900 dark:text-primary-light">
