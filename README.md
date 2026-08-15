@@ -52,4 +52,6 @@ record for `moat` in the `verify.rwth-aachen.de` zone.
 ## Credits
 
 Built on the [ricoui-astro-starter](https://github.com/ricocc/ricoui-astro-starter) template
-(MIT), with its blog, DESIGN, and Elements demo pages removed and its theme system retained.
+(MIT), with its blog, DESIGN, and Elements demo pages removed and its multi-theme system
+reduced to the single Retro Blue palette. See [`docs/DESIGN.md`](docs/DESIGN.md) for the
+palette, typography, and component rules.

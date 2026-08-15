@@ -94,44 +94,9 @@
   --color-text-tertiary-dark: #9bb3d7;
 }
 
-html[data-theme="retro-blue"],
-html:not([data-theme]) {
-  --color-primary: #2d6dc3;
-  --color-primary-rgb: 45, 109, 195;
-  --color-primary-strong: #0066ff;
-  --color-primary-dark: #2d6dc3;
-  --color-primary-light: #8fb9ff;
-  --color-primary-light-dark: #bcd8ff;
-  --color-primary-lighter: #6da7ff;
-  --color-primary-bg: var(--color-bg-primary-light);
-  --color-primary-bg-light: var(--color-bg-secondary);
-
-  --color-btn-primary: #2d6dc3;
-  --color-btn-primary-hover: #0066ff;
-  --color-btn-primary-dark: #2871e9;
-  --color-btn-primary-dark-hover: #2d6dc3;
-  --color-btn-primary-text: #ffffff;
-
-  --color-accent: #fad13b;
-  --color-accent-light: #faeb75;
-
-  --color-bg-primary: #fdfaf5;
-  --color-bg-secondary: #fff;
-  --color-bg-primary-light: #faf9f5;
-  --color-bg-primary-deep: #fefcf4;
-  --color-bg-primary-dark: #0b1220;
-  --color-bg-secondary-dark: #0f1b2d;
-
-  --color-text-primary: #2d6dc3;
-  --color-text-secondary: #3f4a5a;
-  --color-text-tertiary: #7a6550;
-  --color-text-primary-dark: #3884eb;
-  --color-text-secondary-dark: #c5cedb;
-  --color-text-tertiary-dark: #9bb3d7;
-}
-
-html.dark[data-theme="retro-blue"],
-html.dark:not([data-theme]) {
+/* The light palette lives in the @theme block above; only the dark-mode
+   overrides need to be restated here. */
+html.dark {
   --color-primary-rgb: 56, 132, 235;
   --color-primary: #3884eb;
   --color-primary-strong: #8fb9ff;
