@@ -1,0 +1,161 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import PageHeader from "@/components/elements/PageHeader.astro";
+import { ExternalLink } from "@lucide/astro";
+
+// TODO: fill in title, authors, venue, year, DOI, and PDF link once the paper is finalized.
+const moatPaper = {
+	title: "LTL Model Checking via Fair Termination",
+	authors: "",
+	venue: "",
+	year: "",
+	pdf: "",
+	doi: "",
+};
+
+const backends = [
+	{
+		name: "KoAT",
+		role: "Proves fair termination in MoAT's backend.",
+		desc: "A tool to automatically infer complexity bounds for (probabilistic) integer programs, based on an alternating modular inference of upper runtime and size bounds for program parts.",
+		url: "https://koat.verify.rwth-aachen.de/",
+		label: "koat.verify.rwth-aachen.de",
+	},
+	{
+		name: "LoAT",
+		role: "Disproves fair termination in MoAT's backend.",
+		desc: "Proves non-termination and lower runtime bounds for integer programs, searching for reachable non-terminating cycles via an acceleration driven clause learning calculus.",
+		url: "https://loat-developers.github.io/LoAT/",
+		label: "loat-developers.github.io/LoAT",
+	},
+	{
+		name: "Spot",
+		role: "Generates the Büchi automata used by MoAT.",
+		desc: "A library for LTL and ω-automata manipulation, producing optimized transition-based accepting Büchi automata.",
+		url: "https://spot.lre.epita.fr/",
+		label: "spot.lre.epita.fr",
+	},
+];
+
+const compared = [
+	{ name: "MuVal", url: "https://github.com/hiroshi-unno/coar", label: "github.com/hiroshi-unno/coar" },
+	{ name: "nuXmv", url: "https://nuxmv.fbk.eu/", label: "nuxmv.fbk.eu" },
+	{ name: "Ultimate", url: "https://ultimate-pa.org/", label: "ultimate-pa.org" },
+	{ name: "LTL-VerP", url: "", label: "" },
+];
+---
+
+<Layout
+	title="Publications - MoAT"
+	description="Publications about MoAT, the tools it builds on, and the tools it was compared against."
+	keywords="MoAT publications, LTL model checking paper, fair termination, KoAT, LoAT, Spot"
+>
+	<main class="site-container">
+		<PageHeader
+			title="Publications"
+			description="The paper behind MoAT, together with the tools it builds on and the tools it was evaluated against."
+		/>
+
+		<div class="mx-auto max-w-3xl pb-8">
+			<!-- Main paper -->
+			<section class="mb-16">
+				<h2 class="mb-6 font-brand text-3xl tracking-normal">MoAT</h2>
+
+				<article
+					class="rounded-xl border border-primary/15 bg-bg-primary/50 p-6 dark:border-neutral-700 dark:bg-neutral-800/30"
+				>
+					<h3 class="mb-2 text-xl font-semibold text-neutral-800 dark:text-neutral-100">
+						{moatPaper.title}
+					</h3>
+
+					{
+						moatPaper.authors || moatPaper.venue ? (
+							<p class="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+								{moatPaper.authors}
+								{moatPaper.authors && moatPaper.venue ? " · " : ""}
+								{moatPaper.venue}
+								{moatPaper.year ? ` (${moatPaper.year})` : ""}
+							</p>
+						) : (
+							<p class="mb-4 text-sm italic text-neutral-400 dark:text-neutral-500">
+								Authors, venue, and a link to the PDF will be added here.
+							</p>
+						)
+					}
+
+					<p
+						class="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary dark:text-primary-light"
+					>
+						Abstract
+					</p>
+					<p class="mb-5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+						We show that existing tools for termination analysis are extremely well suited for LTL
+						model checking of infinite state systems. To this end, we present a framework MoAT
+						which uses the well-known automata-based approach and reduces the LTL model checking
+						problem to fair termination. To prove or disprove fair termination, it then calls the
+						termination tools KoAT and LoAT in the backend. Our experiments show that in this way,
+						MoAT is on par with existing state-of-the-art tools for LTL model checking of infinite
+						state systems.
+					</p>
+
+					{
+						(moatPaper.pdf || moatPaper.doi) && (
+							<div class="flex flex-wrap gap-3">
+								{moatPaper.pdf && (
+									<a
+										href={moatPaper.pdf}
+										class="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline dark:text-primary-light"
+									>
+										PDF <ExternalLink size={14} />
+									</a>
+								)}
+								{moatPaper.doi && (
+									<a
+										href={moatPaper.doi}
+										class="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline dark:text-primary-light"
+									>
+										DOI <ExternalLink size={14} />
+									</a>
+								)}
+							</div>
+						)
+					}
+				</article>
+			</section>
+
+			<!-- Backends -->
+			<section class="mb-16">
+				<h2 class="mb-3 font-brand text-3xl tracking-normal">Tools MoAT builds on</h2>
+				<p class="mb-6 text-base leading-relaxed text-neutral-600 dark:text-neutral-300">
+					MoAT is a framework: the heavy lifting is done by established tools, each with its own
+					publications and project page.
+				</p>
+
+				<div class="space-y-4">
+					{backends.map((tool) => (
+						<div class="rounded-xl border border-primary/10 bg-bg-primary/50 p-5 dark:border-neutral-700 dark:bg-neutral-800/30">
+							<div class="mb-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+								<h3 class="font-brand text-xl text-neutral-800 dark:text-neutral-100">
+									{tool.name}
+								</h3>
+								<span class="text-xs text-neutral-500 dark:text-neutral-400">{tool.role}</span>
+							</div>
+							<p class="mb-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+								{tool.desc}
+							</p>
+							<a
+								href={tool.url}
+								target="_blank"
+								rel="noopener"
+								class="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline dark:text-primary-light"
+							>
+								{tool.label} <ExternalLink size={13} />
+							</a>
+						</div>
+					))}
+				</div>
+			</section>
+
+		</div>
+	</main>
+</Layout>

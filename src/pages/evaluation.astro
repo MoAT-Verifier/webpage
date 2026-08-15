@@ -1,0 +1,324 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import PageHeader from "@/components/elements/PageHeader.astro";
+
+const tools = ["MoAT", "MuVal", "nuXmv", "Ultimate", "LTL-VerP"];
+
+// Table 1 of the paper: evaluation on LTL formulas, 60 s timeout per example.
+const rows = [
+	{
+		key: "RA",
+		name: "Reach-Avoid",
+		formula: "(F at(ℓ⊥)) ∧ (G (x ≥ 0))",
+		meaning: "the terminal location is reached and a negative value of x is avoided",
+		results: [
+			{ yes: 65, no: 239, total: 304 },
+			{ yes: 44, no: 241, total: 285 },
+			{ yes: 5, no: 221, total: 226 },
+			{ yes: 54, no: 164, total: 218 },
+			{ yes: 9, no: 191, total: 200 },
+		],
+	},
+	{
+		key: "OV",
+		name: "Overflow",
+		formula: "F (x < −64 ∨ x > 63)",
+		meaning: "x overflows",
+		results: [
+			{ yes: 16, no: 295, total: 311 },
+			{ yes: 15, no: 298, total: 313 },
+			{ yes: 7, no: 297, total: 304 },
+			{ yes: 16, no: 270, total: 286 },
+			{ yes: 11, no: 35, total: 46 },
+		],
+	},
+	{
+		key: "RC",
+		name: "Recurrence",
+		formula: "G F (x ≥ 0)",
+		meaning: "a non-negative value of x is reached infinitely often",
+		results: [
+			{ yes: 107, no: 198, total: 305 },
+			{ yes: 108, no: 199, total: 307 },
+			{ yes: 101, no: 193, total: 294 },
+			{ yes: 98, no: 153, total: 251 },
+			{ yes: 89, no: 41, total: 130 },
+		],
+	},
+	{
+		key: "PR",
+		name: "Progress",
+		formula: "G (x < −5 → F (x > 0))",
+		meaning: "a value of x less than −5 eventually becomes positive",
+		results: [
+			{ yes: 103, no: 199, total: 302 },
+			{ yes: 106, no: 201, total: 307 },
+			{ yes: 104, no: 193, total: 297 },
+			{ yes: 99, no: 153, total: 252 },
+			{ yes: 82, no: 54, total: 136 },
+		],
+	},
+];
+
+const totals = [1222, 1212, 1121, 1007, 512];
+const avgAll = ["1.11 s", "5.02 s", "7.26 s", "8.90 s", "33.81 s"];
+const avgSuccess = ["0.78 s", "2.52 s", "0.80 s", "3.07 s", "4.76 s"];
+
+const best = (values: number[]) => Math.max(...values);
+const bestTotal = best(totals);
+
+// Split a formula so the temporal operators can be highlighted. The word
+// boundaries keep a stray G or F inside an atom name from matching.
+const TEMPORAL = /\b([GF])\b/;
+const splitFormula = (formula: string) => formula.split(TEMPORAL);
+---
+
+<Layout
+	title="Evaluation - MoAT"
+	description="Experimental comparison of MoAT with MuVal, nuXmv, Ultimate, and LTL-VerP on 318 C programs from SV-COMP and TermComp across four LTL property classes."
+	keywords="LTL model checking evaluation, SV-COMP, TermComp, MuVal, nuXmv, Ultimate, LTL-VerP, benchmarks"
+>
+	<main class="site-container">
+		<PageHeader
+			title="Evaluation"
+			description="MoAT was compared with state-of-the-art tools for verifying LTL properties of infinite state systems. In total, MoAT solved the most benchmarks and was the fastest tool."
+			tags={["318 C programs", "4 property classes", "60 s timeout"]}
+		/>
+
+		<div class="mx-auto max-w-5xl pb-8">
+			<!-- Setup -->
+			<section class="mb-14">
+				<h2 class="mb-5 font-brand text-3xl tracking-normal">Setup</h2>
+
+				<div class="space-y-4 text-base leading-relaxed text-neutral-700 dark:text-neutral-300">
+					<p>
+						We considered the same benchmarks and similar LTL properties as the evaluation of
+						LTL-VerP. This benchmark set consists of <strong>318 C programs</strong> from the{" "}
+						<em>Software Verification Competition</em> (SV-COMP) and the{" "}
+						<em>Termination Competition</em> (TermComp). To run MoAT on these programs, we
+						translated them into ITSs.
+					</p>
+					<p>
+						All tools were run inside an Ubuntu Docker container on a machine with an AMD Ryzen 7
+						3700X octa-core CPU and 8 GB of RAM, with a timeout of <strong>60 s</strong> per
+						example as in TermComp. In MoAT&rsquo;s backend, KoAT was used for the
+						&ldquo;Yes&rdquo; answers and LoAT was used for answering &ldquo;No&rdquo;.
+					</p>
+					<p>
+						For each tool that supports several configurations, we selected the configuration
+						recommended by the authors. For nuXmv we used the IC3 engines. Note that the published
+						LTL-VerP results were obtained by evaluating a large number of parameter
+						configurations and selecting the best-performing one per benchmark instance, whereas
+						our experiments apply the single configuration identified by its authors as the
+						overall best setting (linear templates for ranking functions). Its performance here is
+						therefore not directly comparable to the numbers reported in that paper.
+					</p>
+				</div>
+			</section>
+
+			<!-- Properties -->
+			<section class="mb-14">
+				<h2 class="mb-5 font-brand text-3xl tracking-normal">LTL properties</h2>
+				<p class="mb-6 text-base leading-relaxed text-neutral-700 dark:text-neutral-300">
+					Here, <span class="font-mono">x</span> refers to the variable which is first when sorting
+					the variable names alphabetically, and <span class="font-mono">ℓ⊥</span> is the terminal
+					location.
+				</p>
+
+				<div class="grid gap-4 sm:grid-cols-2">
+					{rows.map((row) => (
+						<div class="rounded-xl border border-primary/10 bg-bg-primary/50 p-5 dark:border-neutral-700 dark:bg-neutral-800/30">
+							<div class="mb-2 flex items-center gap-2">
+								<span class="rounded-md bg-primary/10 px-2 py-0.5 font-mono text-xs font-semibold text-primary dark:bg-primary/20 dark:text-primary-light">
+									{row.key}
+								</span>
+								<h3 class="text-base font-semibold text-neutral-800 dark:text-neutral-100">
+									{row.name}
+								</h3>
+							</div>
+							<p class="mb-2 overflow-x-auto font-mono text-sm text-neutral-700 dark:text-neutral-200">
+								{splitFormula(row.formula).map((part) =>
+									TEMPORAL.test(part) ? (
+										<span class="font-semibold text-primary dark:text-primary-light">{part}</span>
+									) : (
+										part
+									),
+								)}
+							</p>
+							<p class="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+								Holds if {row.meaning}.
+							</p>
+						</div>
+					))}
+				</div>
+			</section>
+
+			<!-- Results table -->
+			<section class="mb-14">
+				<h2 class="mb-5 font-brand text-3xl tracking-normal">Results</h2>
+
+				<div
+					class="overflow-x-auto rounded-xl border border-primary/15 dark:border-neutral-700"
+					tabindex="0"
+					role="region"
+					aria-label="Evaluation results table, scrollable horizontally"
+				>
+					<table class="w-full min-w-[46rem] border-collapse text-sm">
+						<caption class="sr-only">
+							Evaluation on LTL formulas: number of benchmarks solved per tool and property class
+						</caption>
+						<thead>
+							<tr class="border-b border-primary/15 dark:border-neutral-700">
+								<th
+									scope="col"
+									class="sticky left-0 z-10 bg-bg-primary px-4 py-3 text-left font-semibold text-neutral-700 dark:bg-neutral-900 dark:text-neutral-200"
+								>
+									Prop.
+								</th>
+								{tools.map((tool) => (
+									<th
+										scope="colgroup"
+										colspan="3"
+										class="border-l border-dashed border-primary/15 px-3 py-3 text-center font-brand text-base text-neutral-800 dark:border-neutral-700 dark:text-neutral-100"
+									>
+										{tool}
+									</th>
+								))}
+							</tr>
+							<tr class="border-b border-primary/15 text-xs dark:border-neutral-700">
+								<th scope="col" class="sticky left-0 z-10 bg-bg-primary px-4 py-2 dark:bg-neutral-900"
+								></th>
+								{tools.map(() => (
+									<>
+										<th
+											scope="col"
+											class="border-l border-dashed border-primary/15 px-3 py-2 text-right font-medium text-neutral-500 dark:border-neutral-700 dark:text-neutral-400"
+										>
+											Yes
+										</th>
+										<th
+											scope="col"
+											class="px-3 py-2 text-right font-medium text-neutral-500 dark:text-neutral-400"
+										>
+											No
+										</th>
+										<th
+											scope="col"
+											class="px-3 py-2 text-right font-semibold text-neutral-600 dark:text-neutral-300"
+										>
+											Total
+										</th>
+									</>
+								))}
+							</tr>
+						</thead>
+						<tbody>
+							{rows.map((row) => {
+								const bestCell = best(row.results.map((r) => r.total));
+								return (
+									<tr class="border-b border-dashed border-primary/10 dark:border-neutral-800">
+										<th
+											scope="row"
+											class="sticky left-0 z-10 bg-bg-primary px-4 py-3 text-left font-mono text-xs font-semibold text-primary dark:bg-neutral-900 dark:text-primary-light"
+										>
+											{row.key}
+										</th>
+										{row.results.map((result) => (
+											<>
+												<td class="border-l border-dashed border-primary/15 px-3 py-3 text-right tabular-nums text-neutral-600 dark:border-neutral-700 dark:text-neutral-300">
+													{result.yes}
+												</td>
+												<td class="px-3 py-3 text-right tabular-nums text-neutral-600 dark:text-neutral-300">
+													{result.no}
+												</td>
+												<td
+													class:list={[
+														"px-3 py-3 text-right tabular-nums",
+														result.total === bestCell
+															? "font-semibold text-primary dark:text-primary-light"
+															: "text-neutral-700 dark:text-neutral-200",
+													]}
+												>
+													{result.total}
+												</td>
+											</>
+										))}
+									</tr>
+								);
+							})}
+
+							<tr class="border-b border-primary/15 bg-bg-secondary/40 dark:border-neutral-700 dark:bg-neutral-900/40">
+								<th
+									scope="row"
+									class="sticky left-0 z-10 bg-bg-secondary/40 px-4 py-3 text-left text-xs font-semibold text-neutral-700 dark:bg-neutral-900 dark:text-neutral-200"
+								>
+									Total
+								</th>
+								{totals.map((total) => (
+									<td
+										colspan="3"
+										class:list={[
+											"border-l border-dashed border-primary/15 px-3 py-3 text-center tabular-nums dark:border-neutral-700",
+											total === bestTotal
+												? "font-bold text-primary dark:text-primary-light"
+												: "font-medium text-neutral-700 dark:text-neutral-200",
+										]}
+									>
+										{total}
+									</td>
+								))}
+							</tr>
+
+							<tr class="border-b border-dashed border-primary/10 dark:border-neutral-800">
+								<th
+									scope="row"
+									class="sticky left-0 z-10 bg-bg-primary px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:bg-neutral-900 dark:text-neutral-300"
+								>
+									Avg. T
+								</th>
+								{avgAll.map((value) => (
+									<td
+										colspan="3"
+										class="border-l border-dashed border-primary/15 px-3 py-3 text-center tabular-nums text-neutral-600 dark:border-neutral-700 dark:text-neutral-300"
+									>
+										{value}
+									</td>
+								))}
+							</tr>
+
+							<tr>
+								<th
+									scope="row"
+									class="sticky left-0 z-10 bg-bg-primary px-4 py-3 text-left text-xs font-medium text-neutral-600 dark:bg-neutral-900 dark:text-neutral-300"
+								>
+									Avg.+ T
+								</th>
+								{avgSuccess.map((value) => (
+									<td
+										colspan="3"
+										class="border-l border-dashed border-primary/15 px-3 py-3 text-center tabular-nums text-neutral-600 dark:border-neutral-700 dark:text-neutral-300"
+									>
+										{value}
+									</td>
+								))}
+							</tr>
+						</tbody>
+					</table>
+				</div>
+
+				<p class="mt-4 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+					&ldquo;Avg. T&rdquo; is the average runtime of all runs; &ldquo;Avg.+ T&rdquo; is the
+					average runtime of the successful runs, both in seconds.
+				</p>
+
+
+				<div class="h-6"></div>
+				<p class="text-base leading-relaxed text-neutral-700 dark:text-neutral-300">
+						While MuVal was slightly better than MoAT in some categories, in total MoAT solved the
+						most benchmarks and achieved near-complete coverage (&gt; 96 %) across all categories.
+						MoAT was also the fastest tool, with an average runtime of 1.11 s per example.
+					</p>
+			</section>
+		</div>
+	</main>
+</Layout>

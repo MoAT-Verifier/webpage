@@ -1,0 +1,164 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import PageHeader from "@/components/elements/PageHeader.astro";
+import { siteConfig } from "@/config/site";
+import { ExternalLink, Info } from "@lucide/astro";
+
+// TODO: replace this page with the real instructions once MoAT is distributed.
+// Everything below is limited to what the paper actually states; no install
+// commands, download links, or version numbers have been invented.
+const inputs = [
+	{
+		title: "An integer transition system",
+		body: "MoAT analyzes programs modeled as ITSs: a finite set of variables, a finite set of locations with a designated initial and terminal location, and a finite set of transitions carrying a guard and an update. In the evaluation, the C benchmarks from SV-COMP and TermComp were translated into ITSs before running MoAT.",
+	},
+	{
+		title: "An LTL formula",
+		body: "The property to verify. MoAT negates it, builds a Büchi automaton for the negation, and forms the synchronized product with the ITS. The evaluation used four property classes: Reach-Avoid, Overflow, Recurrence, and Progress.",
+	},
+];
+
+const outputs = [
+	{
+		answer: "Yes",
+		desc: "The property is verified. The product ITS is fairly terminating, proved by KoAT on the incoming transitions of the fair locations.",
+	},
+	{
+		answer: "No",
+		desc: "The property is refuted. LoAT found a reachable non-terminating cycle containing a fair location; the trace is projected back to the locations of the original ITS to give a counterexample.",
+	},
+	{
+		answer: "Unknown",
+		desc: "Fair termination is undecidable in general, so neither backend may reach a conclusion within the time limit.",
+	},
+];
+---
+
+<Layout
+	title="Getting Started - MoAT"
+	description="What MoAT takes as input, what it produces, and which components it relies on."
+	keywords="MoAT usage, integer transition system input, LTL formula, KoAT, LoAT, Spot"
+>
+	<main class="site-container">
+		<PageHeader
+			title="Getting Started"
+			description="What MoAT takes as input, what its answers mean, and which components it relies on."
+		/>
+
+		<div class="mx-auto max-w-3xl pb-8">
+			<!-- Availability notice -->
+			<div
+				class="mb-14 flex gap-4 rounded-xl border border-dashed border-primary/30 bg-bg-secondary/50 p-5 dark:border-neutral-600 dark:bg-neutral-900/40"
+			>
+				<Info class="mt-0.5 h-5 w-5 flex-none text-primary dark:text-primary-light" />
+				<div>
+					<p class="mb-1 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+						Download and installation instructions are not yet published here.
+					</p>
+					<p class="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+						Once MoAT is distributed, this page will describe how to obtain and run it. In the
+						meantime, see{" "}
+						<a
+							href={siteConfig.social.github}
+							target="_blank"
+							rel="noopener"
+							class="font-medium text-primary hover:underline dark:text-primary-light">GitHub</a
+						>
+						{" "}or the <a
+							href="/publications/"
+							class="font-medium text-primary hover:underline dark:text-primary-light"
+							>publications</a
+						> page.
+					</p>
+				</div>
+			</div>
+
+			<!-- Input -->
+			<section class="mb-14">
+				<h2 class="mb-6 font-brand text-3xl tracking-normal">Input</h2>
+				<div class="space-y-4">
+					{inputs.map((item) => (
+						<div class="rounded-xl border border-primary/10 bg-bg-primary/50 p-5 dark:border-neutral-700 dark:bg-neutral-800/30">
+							<h3 class="mb-2 text-lg font-semibold text-neutral-800 dark:text-neutral-100">
+								{item.title}
+							</h3>
+							<p class="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+								{item.body}
+							</p>
+						</div>
+					))}
+				</div>
+			</section>
+
+			<!-- Output -->
+			<section class="mb-14">
+				<h2 class="mb-6 font-brand text-3xl tracking-normal">Output</h2>
+				<div class="space-y-3">
+					{outputs.map((item) => (
+						<div class="flex gap-4 rounded-xl border border-primary/10 bg-bg-primary/50 p-5 dark:border-neutral-700 dark:bg-neutral-800/30">
+							<span class="mt-0.5 h-fit rounded-md bg-primary/10 px-2.5 py-1 font-mono text-xs font-semibold text-primary dark:bg-primary/20 dark:text-primary-light">
+								{item.answer}
+							</span>
+							<p class="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+								{item.desc}
+							</p>
+						</div>
+					))}
+				</div>
+			</section>
+
+			<!-- Components -->
+			<section>
+				<h2 class="mb-6 font-brand text-3xl tracking-normal">Components</h2>
+				<p class="mb-5 text-base leading-relaxed text-neutral-700 dark:text-neutral-300">
+					MoAT is a framework built on top of existing tools. Running it means running these
+					components:
+				</p>
+				<ul class="space-y-3">
+					<li
+						class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg border border-dashed border-primary/20 bg-bg-secondary/40 px-4 py-3 dark:border-neutral-700 dark:bg-neutral-900/40"
+					>
+						<a
+							href="https://spot.lre.epita.fr/"
+							target="_blank"
+							rel="noopener"
+							class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline dark:text-primary-light"
+							>Spot <ExternalLink size={13} /></a
+						>
+						<span class="text-sm text-neutral-600 dark:text-neutral-300"
+							>builds the Büchi automaton for the negated formula</span
+						>
+					</li>
+					<li
+						class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg border border-dashed border-primary/20 bg-bg-secondary/40 px-4 py-3 dark:border-neutral-700 dark:bg-neutral-900/40"
+					>
+						<a
+							href="https://koat.verify.rwth-aachen.de/"
+							target="_blank"
+							rel="noopener"
+							class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline dark:text-primary-light"
+							>KoAT <ExternalLink size={13} /></a
+						>
+						<span class="text-sm text-neutral-600 dark:text-neutral-300"
+							>proves fair termination of the product ITS</span
+						>
+					</li>
+					<li
+						class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg border border-dashed border-primary/20 bg-bg-secondary/40 px-4 py-3 dark:border-neutral-700 dark:bg-neutral-900/40"
+					>
+						<a
+							href="https://loat-developers.github.io/LoAT/"
+							target="_blank"
+							rel="noopener"
+							class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline dark:text-primary-light"
+							>LoAT <ExternalLink size={13} /></a
+						>
+						<span class="text-sm text-neutral-600 dark:text-neutral-300"
+							>disproves fair termination and yields the counterexample</span
+						>
+					</li>
+				</ul>
+			</section>
+		</div>
+	</main>
+</Layout>

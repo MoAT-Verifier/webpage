@@ -11,13 +11,20 @@ export const siteConfig = {
 		campaign: "navigation",
 	},
 	meta: {
-		title: "MoAT",
-		description: "The MoAT project.",
-		keywords: "moat",
+		title: "MoAT - LTL Model Checking of Infinite State Systems",
+		description:
+			"MoAT (Model Checking Analysis Tool) verifies LTL properties of infinite state systems by reducing model checking to fair termination, using the termination tools KoAT and LoAT in the backend.",
+		keywords:
+			"LTL model checking, infinite state systems, fair termination, integer transition systems, Büchi automata, termination analysis, KoAT, LoAT, program verification",
 		image: `${SITE_URL}/assets/preview.jpg`,
 		twitterHandle: "",
 	},
 	social: {
-		github: "https://github.com/",
+		// TODO: point this at the MoAT tool repository once it is public.
+		github: "https://github.com/MoAT-Verifier",
+	},
+	contact: {
+		group: "LuFG Informatik 2, RWTH Aachen University",
+		groupUrl: "https://verify.rwth-aachen.de/",
 	},
 };

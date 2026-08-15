@@ -1,205 +1,338 @@
 ---
 import Layout from "@/layouts/Layout.astro";
-import HeroSection from "@/components/home/HeroSection.astro";
 import SectionHeader from "@/components/elements/SectionHeader.astro";
-import BlogSection from "@/components/sections/BlogSection.astro";
+import Badge from "@/components/ui/Badge.astro";
 import Button from "@/components/ui/Button.astro";
-import BrowserFrame from "@/components/ui/BrowserFrame.astro";
 import { siteConfig } from "@/config/site";
-import {
-	ArrowRight,
-	BookOpen,
-	Brush,
-	FilePenLine,
-	FileText,
-	FolderOpen,
-	Layers,
-	LayoutTemplate,
-	Palette,
-	Rss,
-	Settings,
-	Sparkles,
-} from "@lucide/astro";
+import { ArrowRight, BookOpen, Gauge, GitBranch, GitFork, Rocket } from "@lucide/astro";
 
-const starterScope = [
+// The verification pipeline, as described in the paper.
+const pipeline = [
+	{ step: "1", label: "Program", detail: "Integer transition system \u{1D4AB}" },
+	{ step: "2", label: "LTL Formula", detail: "Property φ to verify" },
+	{ step: "3", label: "Büchi Automaton", detail: "B for ¬φ built with Spot" },
+	{ step: "4", label: "Synchronized Product", detail: "Construct \u{1D4AB} ⊗ B" },
+	{ step: "5", label: "Fair Termination", detail: "Checked by KoAT and LoAT" },
+];
+
+// The two tools the pipeline hands off to.
+const backendTiles = [
 	{
-		icon: Palette,
-		title: "Theme first",
-		desc: "Global tokens define the palette, typography, radii, surfaces, and dark mode before pages start to multiply.",
+		name: "KoAT",
+		role: "proves fair termination",
+		url: "https://koat.verify.rwth-aachen.de/",
 	},
 	{
-		icon: FileText,
-		title: "DESIGN.md included",
-		desc: "The design notes are part of the template, so human builders and AI agents can follow the same visual rules.",
-	},
-	{
-		icon: BookOpen,
-		title: "Blog ready",
-		desc: "MDX posts, RSS, pagination, article layout, table of contents, and image handling are already wired.",
-	},
-	{
-		icon: Layers,
-		title: "Element theme",
-		desc: "Buttons, badges, cards, typography, motion, form controls, and layout primitives live in one reference page.",
+		name: "LoAT",
+		role: "disproves fair termination",
+		url: "https://loat-developers.github.io/LoAT/",
 	},
 ];
 
-const fileMap = [
-	{ path: "src/pages/index.astro", note: "starter home" },
-	{ path: "src/pages/blog", note: "MDX blog routes" },
-	{ path: "src/pages/design.astro", note: "DESIGN.md preview" },
-	{ path: "src/pages/elements.astro", note: "theme components" },
-	{ path: "src/styles/global.css", note: "Tailwind v4 tokens" },
-	{ path: "src/config/site.js", note: "site metadata" },
-];
+// Highlight the formal symbols in the pipeline captions, matching how the
+// temporal operators are treated on the evaluation page. ¬φ must come before φ
+// so the negation is kept together, and the word boundaries stop the B from
+// matching inside an ordinary word.
+const MATH = /(\u{1D4AB}|¬φ|φ|\bB\b)/u;
+const splitMath = (text: string) => text.split(MATH);
 
-const workflow = [
-	{
-		icon: Settings,
-		title: "Site metadata",
-		desc: "Edit src/config/site.js",
-	},
-	{
-		icon: Palette,
-		title: "Theme tokens",
-		desc: "Tune colors in global.css and themes.css",
-	},
-	{
-		icon: FilePenLine,
-		title: "Content posts",
-		desc: "Write MDX in src/content/post",
-	},
-	{
-		icon: LayoutTemplate,
-		title: "Page composition",
-		desc: "Build from the Elements reference",
-	},
+const stats = [
+	{ value: "1222", label: "benchmarks solved", note: "most of all compared tools" },
+	{ value: "> 96 %", label: "coverage", note: "across all four property classes" },
+	{ value: "1.11 s", label: "average runtime", note: "fastest tool in the comparison" },
+	{ value: "318", label: "C programs", note: "from SV-COMP and TermComp" },
 ];
 ---
 
 <Layout
-	title="MoAT"
-	description="A clean Astro starter with Blog, DESIGN.md, Elements, Tailwind CSS v4, MDX, and a reusable design theme."
-	keywords="astro starter, design system, tailwind css, mdx blog, website template"
+	title={siteConfig.meta.title}
+	description={siteConfig.meta.description}
+	keywords={siteConfig.meta.keywords}
 >
-	<HeroSection />
-
-	<section class="site-container py-16 md:py-24">
-		<SectionHeader
-			title="Pure starter surface"
-			description="The template keeps the useful parts visible and removes product-specific demo pages, pricing copy, auth screens, and release-note filler from the public site."
-		/>
-		<div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-			{starterScope.map((item) => (
-				<article
-					class="rounded-xl border border-primary/10 bg-bg-secondary p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(var(--color-primary-rgb),0.08)] dark:border-neutral-700 dark:bg-bg-secondary-dark"
-				>
-					<div class="mb-4 grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
-						<item.icon class="h-5 w-5" />
-					</div>
-					<h3 class="mb-2 text-lg font-semibold text-neutral-800 dark:text-neutral-100">{item.title}</h3>
-					<p class="text-sm leading-relaxed text-neutral-500 dark:text-neutral-400">{item.desc}</p>
-				</article>
-			))}
-		</div>
-	</section>
-
-	<div class="site-container my-4 border-b border-dashed border-neutral-200 dark:border-neutral-700"></div>
-
-	<section class="site-container py-16 md:py-24">
-		<div class="grid items-start gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+	<!-- Hero -->
+	<section class="relative z-20 site-container pt-16 md:pt-24 lg:pt-28">
+		<div class="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
 			<div>
-				<div class="mb-4 inline-flex items-center gap-2 rounded-md border border-dashed border-primary/25 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
-					<Brush class="h-3.5 w-3.5" /> Theme workflow
+				<div class="mb-6 flex flex-wrap gap-2">
+					<Badge variant="primary">Model Checking Analysis Tool</Badge>
+					<Badge variant="accent">LTL · Infinite State Systems</Badge>
 				</div>
-				<h2 class="mb-4 max-w-xl text-3xl font-brand md:text-4xl">Build from the design, then fill in the product</h2>
-				<p class="max-w-2xl text-neutral-600 leading-relaxed dark:text-neutral-300">
-					This starter is intentionally quiet: it gives you a polished visual system, a content layer, and a component reference. Your app, brand, product screenshots, and copy can take over from there.
+
+				<h1 class="mb-4 font-brand text-5xl leading-tight tracking-tight md:text-6xl lg:text-7xl">
+					MoAT
+				</h1>
+
+				<p class="mb-5 max-w-2xl text-lg text-neutral-700 dark:text-neutral-200 md:text-xl">
+					LTL model checking of infinite state systems via fair termination.
 				</p>
-				<div class="mt-7 flex flex-wrap gap-3">
-					<Button url="/design" type="fill">
-						View DESIGN.md <ArrowRight size={16} />
+
+				<p class="mb-7 max-w-2xl text-base leading-relaxed text-neutral-600 dark:text-neutral-300">
+					MoAT reduces the LTL model checking problem to <em>fair termination</em> using the
+					well-known automata-based approach, and then calls the termination tools{" "}
+					<strong>KoAT</strong> and <strong>LoAT</strong> in the backend to prove or disprove it.
+				</p>
+
+				<div class="flex flex-wrap gap-3">
+					<Button url="/approach/" type="fill">
+						<BookOpen size={16} /> How it works
 					</Button>
-					<Button url="/elements">
-						Open Elements
+					<Button url="/evaluation/">
+						<Rocket size={16} /> Evaluation
+					</Button>
+					<Button url={siteConfig.social.github} type="outline" target="_blank">
+						<GitFork size={16} /> GitHub
 					</Button>
 				</div>
 			</div>
 
-			<BrowserFrame url="starter/theme-map" className="w-full">
-				<div class="grid gap-3 p-4 md:p-5">
-					{fileMap.map((file) => (
-						<div class="grid grid-cols-[1fr_auto] items-center gap-4 rounded-lg border border-primary/10 bg-bg-primary/50 px-4 py-3 dark:border-neutral-700 dark:bg-neutral-800/40">
-							<div class="flex min-w-0 items-center gap-3">
-								<FolderOpen class="h-4 w-4 flex-none text-primary" />
-								<span class="truncate font-mono text-xs text-neutral-700 dark:text-neutral-200">{file.path}</span>
-							</div>
-							<span class="rounded-md bg-primary/5 px-2 py-1 text-[10px] text-primary dark:bg-primary/10 dark:text-primary-light">
-								{file.note}
-							</span>
-						</div>
-					))}
-				</div>
-			</BrowserFrame>
-		</div>
-	</section>
-
-	<section class="site-container py-16 md:py-24">
-		<SectionHeader
-			title="A short path from clone to custom site"
-			description="Most first edits should happen in four places. The rest of the starter stays out of your way."
-		/>
-		<div class="mt-8 grid gap-4 md:grid-cols-4">
-			{workflow.map((step, index) => (
+			<!-- Verification pipeline box -->
+			<div class="relative">
 				<div
-					class="group rounded-xl border border-dashed border-primary/20 bg-bg-secondary p-5 transition-colors duration-200 hover:border-primary/35 hover:bg-primary/5 dark:border-neutral-700 dark:bg-bg-secondary-dark dark:hover:border-primary/40 dark:hover:bg-primary/10"
+					class="rounded-2xl border border-dashed border-primary/20 bg-bg-secondary/40 p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-900/40 md:p-6"
 				>
-					<div class="mb-5 flex items-start justify-between gap-4">
-						<span class="grid h-10 w-10 flex-none place-items-center rounded-lg bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-btn-primary-text dark:bg-primary/20 dark:text-primary-light">
-							<step.icon class="h-5 w-5" />
-						</span>
-						<span class="font-mono text-xs font-medium text-primary/75 dark:text-primary-light">
-							{String(index + 1).padStart(2, "0")}
-						</span>
+					<p class="mb-5 text-[10px] font-medium uppercase tracking-[0.16em] text-neutral-400">
+						Verification Pipeline
+					</p>
+
+					<ol class="space-y-2.5">
+						{pipeline.map((item, index) => (
+							<li
+								class="pipeline-row flex items-start gap-3 rounded-lg border border-primary/10 bg-bg-primary/60 px-3 py-2.5 dark:border-neutral-700 dark:bg-neutral-800/40"
+								style={`--row-delay: ${index * 90}ms;`}
+							>
+								<span
+									class="mt-0.5 grid h-6 w-6 flex-none place-items-center rounded-md bg-primary/10 font-mono text-xs font-semibold text-primary dark:bg-primary/20 dark:text-primary-light"
+								>
+									{item.step}
+								</span>
+								<span class="min-w-0">
+									<span class="block text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+										{item.label}
+									</span>
+									<span class="block text-xs text-neutral-500 dark:text-neutral-400">
+										{splitMath(item.detail).map((part) =>
+											MATH.test(part) ? (
+												<span class="font-semibold text-primary dark:text-primary-light">
+													{part}
+												</span>
+											) : (
+												part
+											),
+										)}
+									</span>
+								</span>
+							</li>
+						))}
+					</ol>
+
+					<div
+						class="mt-4 grid grid-cols-2 gap-2 rounded-lg border border-dashed border-primary/15 bg-bg-secondary/60 p-3 dark:border-neutral-700 dark:bg-neutral-900/40"
+					>
+						{backendTiles.map((tool) => (
+							<a
+								href={tool.url}
+								target="_blank"
+								rel="noopener"
+								class="group rounded-md bg-primary/5 px-3 py-2 transition-colors duration-200 hover:bg-primary/15 dark:bg-primary/10 dark:hover:bg-primary/20"
+							>
+								<span class="block font-mono text-xs font-semibold text-primary group-hover:underline dark:text-primary-light">
+									{tool.name}
+								</span>
+								<span class="block text-[11px] text-neutral-500 dark:text-neutral-400">
+									{tool.role}
+								</span>
+							</a>
+						))}
 					</div>
-					<h3 class="mb-2 text-base font-semibold text-neutral-800 dark:text-neutral-100">{step.title}</h3>
-					<p class="font-mono text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">{step.desc}</p>
 				</div>
-			))}
+			</div>
 		</div>
 	</section>
 
-	<div class="site-container my-4 border-b border-dashed border-neutral-200 dark:border-neutral-700"></div>
+	<main class="site-container">
+		<!-- About -->
+		<section id="about" class="mx-auto max-w-3xl pt-20 md:pt-28">
+			<h2 class="mb-6 font-brand text-3xl tracking-normal sm:text-4xl">About</h2>
 
-	<section class="py-16 md:py-24">
-		<BlogSection
-			title="Starter notes"
-			description="Use the Blog as documentation, release writing, essays, or product updates."
-			limit={3}
-		/>
-	</section>
+			<div class="space-y-5 text-base leading-relaxed text-neutral-700 dark:text-neutral-300">
+				<p>
+					Existing tools for termination analysis are extremely well suited for LTL model checking
+					of infinite state systems. <strong>MoAT</strong> (Model Checking Analysis Tool) is a
+					framework which builds on this observation: it uses the well-known automata-based
+					approach and reduces the LTL model checking problem to <em>fair termination</em>.
+				</p>
 
-	<section class="site-container py-12 md:py-20">
-		<div
-			class="rounded-xl border border-primary/10 bg-bg-secondary p-7 text-center dark:border-neutral-700 dark:bg-bg-secondary-dark md:p-10"
-		>
-			<div class="mb-4 flex justify-center">
-				<div class="grid h-12 w-12 place-items-center rounded-xl bg-accent/30 text-neutral-800 dark:bg-accent/20 dark:text-neutral-100">
-					<Sparkles class="h-5 w-5" />
+				<p>
+					Linear temporal logic is widely used to express properties of software — local or global
+					invariants, but also properties like termination. While there is a wealth of work on
+					deciding LTL properties for finite state systems, the abstraction step from general
+					programs to finite state systems naturally results in a loss of precision. MoAT therefore
+					targets <strong>infinite state systems</strong> directly, modeled as integer transition
+					systems (ITSs).
+				</p>
+
+				<p>
+					To decide the resulting fair termination problem, MoAT calls the termination tools{" "}
+					<strong>KoAT</strong> and <strong>LoAT</strong> in the backend. While fair termination is
+					undecidable in general, MoAT benefits from integrating these tools, which can often prove
+					or refute the property for a wide range of practical programs.
+				</p>
+
+				<p>
+					Our experiments show that in this way, MoAT is <strong>on par with existing
+					state-of-the-art tools</strong> for LTL model checking of infinite state systems. This
+					demonstrates that state-of-the-art tools for termination analysis are also very suitable
+					for applications in other areas.
+				</p>
+			</div>
+
+			<div class="mt-8 flex flex-wrap gap-3">
+				<Button url="/approach/" type="fill" size="sm">
+					Read the approach <ArrowRight size={15} />
+				</Button>
+				<Button url="/publications/" type="outline" size="sm">Publications</Button>
+			</div>
+		</section>
+
+		<!-- Results at a glance -->
+		<section class="pt-20 md:pt-28">
+			<SectionHeader
+				title="Results at a glance"
+				description="MoAT was compared against MuVal, nuXmv, Ultimate, and LTL-VerP on 318 C programs from SV-COMP and TermComp, using four LTL property classes and a 60 s timeout per example."
+			/>
+
+			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+				{stats.map((stat) => (
+					<div class="rounded-xl border border-dashed border-primary/20 bg-bg-secondary/40 p-5 dark:border-neutral-700 dark:bg-neutral-900/40">
+						<p class="font-brand text-3xl text-primary dark:text-primary-light">{stat.value}</p>
+						<p class="mt-1 text-sm font-semibold text-neutral-800 dark:text-neutral-100">
+							{stat.label}
+						</p>
+						<p class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{stat.note}</p>
+					</div>
+				))}
+			</div>
+
+			<div class="mt-8 text-center">
+				<a
+					href="/evaluation/"
+					class="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-primary/80 dark:text-primary-light"
+				>
+					See the full evaluation <ArrowRight size={15} />
+				</a>
+			</div>
+		</section>
+
+		<!-- Backends -->
+		<section class="pt-20 md:pt-28">
+			<SectionHeader
+				title="Backends"
+				description="MoAT does not implement its own termination analysis. It delegates to two mature tools, each handling one direction of the problem."
+			/>
+
+			<div class="grid gap-5 md:grid-cols-2">
+				<div class="rounded-xl border border-dashed border-primary/20 bg-bg-secondary/40 p-6 dark:border-neutral-700 dark:bg-neutral-900/40">
+					<div class="mb-3 flex items-center gap-3">
+						<div class="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
+							<Gauge class="h-5 w-5" />
+						</div>
+						<div>
+							<h3 class="font-brand text-xl text-neutral-800 dark:text-neutral-100">KoAT</h3>
+							<p class="text-xs text-neutral-500 dark:text-neutral-400">answers &ldquo;Yes&rdquo;</p>
+						</div>
+					</div>
+					<p class="mb-4 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+						KoAT infers a termination argument for each transition individually. Because of this
+						modularity, proving fair termination only requires looking at its result on the
+						incoming transitions of fair locations. It uses multiphase-linear ranking functions,
+						a dedicated technique for triangular weakly non-linear loops, and control-flow
+						refinement.
+					</p>
+					<a
+						href="https://koat.verify.rwth-aachen.de/"
+						target="_blank"
+						rel="noopener"
+						class="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-primary/80 dark:text-primary-light"
+					>
+						koat.verify.rwth-aachen.de <ArrowRight size={14} />
+					</a>
+				</div>
+
+				<div class="rounded-xl border border-dashed border-primary/20 bg-bg-secondary/40 p-6 dark:border-neutral-700 dark:bg-neutral-900/40">
+					<div class="mb-3 flex items-center gap-3">
+						<div class="grid h-10 w-10 place-items-center rounded-lg bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light">
+							<GitBranch class="h-5 w-5" />
+						</div>
+						<div>
+							<h3 class="font-brand text-xl text-neutral-800 dark:text-neutral-100">LoAT</h3>
+							<p class="text-xs text-neutral-500 dark:text-neutral-400">answers &ldquo;No&rdquo;</p>
+						</div>
+					</div>
+					<p class="mb-4 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+						LoAT proves non-termination by searching for reachable non-terminating cycles via an
+						acceleration driven clause learning calculus. This calculus is suitable for arbitrary
+						forms of ITSs, including ITSs with nested loops. To disprove fair termination, it runs
+						until it finds such a cycle that contains a fair location.
+					</p>
+					<a
+						href="https://loat-developers.github.io/LoAT/"
+						target="_blank"
+						rel="noopener"
+						class="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-primary/80 dark:text-primary-light"
+					>
+						LoAT project page <ArrowRight size={14} />
+					</a>
 				</div>
 			</div>
-			<h2 class="mx-auto mb-4 max-w-2xl text-3xl font-brand md:text-4xl">Start with the theme, ship your own thing</h2>
-			<p class="mx-auto mb-7 max-w-2xl text-neutral-600 dark:text-neutral-300">
-				Clone the starter, keep the design language, and replace the sample writing with your own project structure and content.
-			</p>
-			<div class="flex flex-wrap justify-center gap-3">
-				<Button url={siteConfig.social.github} type="fill" target="_blank">
-					Get Template <ArrowRight size={16} />
-				</Button>
-				<Button url="/rss.xml">
-					<Rss size={16} /> RSS
-				</Button>
+		</section>
+
+		<!-- Contact -->
+		<section class="pt-20 md:pt-28">
+			<div
+				class="mx-auto max-w-3xl rounded-xl border border-dashed border-primary/20 bg-bg-secondary/40 p-6 text-center dark:border-neutral-700 dark:bg-neutral-900/40 md:p-8"
+			>
+				<h2 class="mb-3 font-brand text-2xl text-neutral-800 dark:text-neutral-100">Contact</h2>
+				<p class="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+					MoAT is developed at{" "}
+					<a
+						href={siteConfig.contact.groupUrl}
+						target="_blank"
+						rel="noopener"
+						class="font-medium text-primary hover:underline dark:text-primary-light"
+						>{siteConfig.contact.group}</a
+					>. If you encounter any difficulties, please get in touch or open an issue on{" "}
+					<a
+						href={siteConfig.social.github}
+						target="_blank"
+						rel="noopener"
+						class="font-medium text-primary hover:underline dark:text-primary-light">GitHub</a
+					>.
+				</p>
 			</div>
-		</div>
-	</section>
+		</section>
+	</main>
 </Layout>
+
+<style>
+	.pipeline-row {
+		animation: row-rise 520ms cubic-bezier(0.4, 0, 0.2, 1) backwards;
+		animation-delay: var(--row-delay, 0ms);
+	}
+
+	@keyframes row-rise {
+		from {
+			opacity: 0;
+			transform: translateY(8px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.pipeline-row {
+			animation: none !important;
+		}
+	}
+</style>

@@ -1,18 +1,22 @@
 [
 	{
-		"name": "Home",
+		"name": "About",
 		"url": "/"
 	},
 	{
-		"name": "Blog",
-		"url": "/blog"
+		"name": "Approach",
+		"url": "/approach/"
 	},
 	{
-		"name": "Design",
-		"url": "/design"
+		"name": "Evaluation",
+		"url": "/evaluation/"
 	},
 	{
-		"name": "Elements",
-		"url": "/elements"
+		"name": "Getting Started",
+		"url": "/getting_started/"
+	},
+	{
+		"name": "Publications",
+		"url": "/publications/"
 	}
 ]
