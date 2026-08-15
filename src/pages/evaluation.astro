@@ -9,7 +9,7 @@ const rows = [
 	{
 		key: "RA",
 		name: "Reach-Avoid",
-		formula: "(F at(ℓ⊥)) ∧ (G (x ≥ 0))",
+		formula: "(F at(l_term)) ∧ (G (x ≥ 0))",
 		meaning: "the terminal location is reached and a negative value of x is avoided",
 		results: [
 			{ yes: 65, no: 239, total: 304 },
@@ -121,7 +121,7 @@ const splitFormula = (formula: string) => formula.split(TEMPORAL);
 				<h2 class="mb-5 font-brand text-3xl tracking-normal">LTL properties</h2>
 				<p class="mb-6 text-base leading-relaxed text-neutral-700 dark:text-neutral-300">
 					Here, <span class="font-mono">x</span> refers to the variable which is first when sorting
-					the variable names alphabetically, and <span class="font-mono">ℓ⊥</span> is the terminal
+					the variable names alphabetically, and <span class="font-mono">l_term</span> is the terminal
 					location.
 				</p>
 
