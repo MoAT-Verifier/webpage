@@ -6,8 +6,7 @@
 /* Path relative to current CSS file */
 @config "../../tailwind.config.mjs";
 
-/* Revalia (Google Fonts, OFL) is self-hosted from public/fonts so that no
-   visitor data is sent to Google's servers when the page loads. */
+/* Revalia (Google Fonts, OFL) is self-hosted from public/fonts so that no visitor data is sent to Google's servers when the page loads. */
 @font-face {
   font-family: "Revalia";
   font-style: normal;
@@ -206,6 +205,15 @@ html.dark {
     background-clip: text;
     color: transparent;
   }
+}
+
+/* The A of the MoAT wordmark, turned into a universal quantifier. */
+.wordmark-a {
+  display: inline-block;
+  transform: rotate(180deg);
+}
+.font-brand .wordmark-a {
+  transform: rotate(180deg) translateY(-0.0986em);
 }
 
 /* Collapsed abstract: the chevron points down once its panel is open. */
