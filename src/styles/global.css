@@ -212,8 +212,11 @@ html.dark {
   display: inline-block;
   transform: rotate(180deg);
 }
+
 .font-brand .wordmark-a {
-  transform: rotate(180deg) translateY(-0.0986em);
+  margin-left: 0.035em;
+  margin-right: 0.05em;
+  transform: rotate(180deg) translate(-0.045em, -0.0986em);
 }
 
 /* Collapsed abstract: the chevron points down once its panel is open. */

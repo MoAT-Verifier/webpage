@@ -9,10 +9,10 @@ import { ArrowRight, BookOpen, Gauge, GitBranch, GitFork, Rocket } from "@lucide
 
 // The verification pipeline, as described in the paper.
 const pipeline = [
-	{ step: "1", label: "Program", detail: "Integer transition system \u{1D4AB}" },
+	{ step: "1", label: "Program", detail: "Integer Transition System P" },
 	{ step: "2", label: "LTL Formula", detail: "Property φ to verify" },
 	{ step: "3", label: "Büchi Automaton", detail: "B for ¬φ built with Spot" },
-	{ step: "4", label: "Synchronized Product", detail: "Construct \u{1D4AB} ⊗ B" },
+	{ step: "4", label: "Synchronized Product", detail: "Construct P ⊗ B" },
 	{ step: "5", label: "Fair Termination", detail: "Checked by KoAT and LoAT" },
 ];
 
@@ -30,11 +30,8 @@ const backendTiles = [
 	},
 ];
 
-// Highlight the formal symbols in the pipeline captions, matching how the
-// temporal operators are treated on the evaluation page. ¬φ must come before φ
-// so the negation is kept together, and the word boundaries stop the B from
-// matching inside an ordinary word.
-const MATH = /(\u{1D4AB}|¬φ|φ|\bB\b)/u;
+// P and B must stand alone, or the capital in "Property" is set as a variable.
+const MATH = /(\bP\b|¬φ|φ|\bB\b)/u;
 const splitMath = (text: string) => text.split(MATH);
 
 const stats = [
