@@ -31,10 +31,10 @@ The pages are:
 | `/getting_started/` | Input, output, and components |
 | `/publications/` | The paper and the tools it builds on |
 
-The technical content is taken from the LaTeX sources of the paper in [`paper/`](paper/).
-That directory is the source of truth for all claims, formulas, and benchmark numbers —
-in particular, the results table in `src/pages/evaluation.astro` is a transcription of the
-table in `paper/evaluation.tex`.
+The technical content is taken from the MoAT paper, whose LaTeX sources are kept in a
+separate repository rather than here. The paper is the source of truth for all claims,
+formulas, and benchmark numbers — in particular, the results table in
+`src/pages/evaluation.astro` is a transcription of the evaluation table in that paper.
 
 Site identity and metadata live in [`src/config/site.js`](src/config/site.js); the header
 navigation is [`src/collections/menu.json`](src/collections/menu.json).
