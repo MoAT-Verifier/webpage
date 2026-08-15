@@ -27,7 +27,6 @@ The pages are:
 | Route | Content |
 | --- | --- |
 | `/` | About: overview, results at a glance, backends, contact |
-| `/approach/` | The reduction from LTL to fair termination |
 | `/evaluation/` | Experimental setup, LTL properties, results table |
 | `/getting_started/` | Input, output, and components |
 | `/publications/` | The paper and the tools it builds on |
