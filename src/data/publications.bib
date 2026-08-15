@@ -1,0 +1,34 @@
+% Single source of truth for the publications page.
+% Rendered at build time by src/lib/bibtex.ts -> components/elements/PublicationList.astro.
+%
+% Recognised fields:
+%   author, title, year            required
+%   booktitle, series, volume, pages   proceedings; `series` drives the venue line
+%   journal, volume, pages         journal alternative to the above
+%   abstract                       shown in the abstract box
+%   month, sortkey                 ordering only, never displayed
+%   doi                            BARE doi, https://doi.org/ is added by the renderer
+%   arxiv, pdf, site               full URLs (site may be root-relative)
+%   to_appear = {}                 presence-only flag; suppresses the venue line
+%
+% Author names are printed verbatim as a single line — write them exactly as
+% they should appear, comma-separated with a final "and".
+
+@inproceedings{conf/wst/LommenRG26,
+  author    = {Nils Lommen, Moritz Leven Rosarius, and Jürgen Giesl},
+  title     = {Verifying LTL for Infinite State Systems via Termination Analysis},
+  booktitle = {International Workshop on Termination, WST 2026},
+  year      = {2026},
+  month     = {June},
+  abstract  = {We show that existing tools for termination analysis are extremely
+               well suited for LTL model checking of infinite state systems. To this
+               end, we present a framework MoAT which uses the well-known
+               automata-based approach and reduces the LTL model checking problem to
+               fair termination. To prove or disprove fair termination, it then calls
+               the termination tools KoAT and LoAT in the backend. Our experiments
+               show that in this way, MoAT is on par with existing state-of-the-art
+               tools for LTL model checking of infinite state systems.},
+  arxiv     = {https://arxiv.org/abs/2606.17693},
+  pdf       = {https://arxiv.org/pdf/2606.17693},
+  site      = {/evaluation}
+}

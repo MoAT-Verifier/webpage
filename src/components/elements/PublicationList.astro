@@ -1,0 +1,171 @@
+---
+import type { Publication } from "@/types/publications";
+import { groupByYear, titleHref, venueLine } from "@/types/publications";
+import {
+	ChevronRight,
+	FileText,
+	Globe,
+	Link2,
+	ScrollText,
+} from "@lucide/astro";
+
+interface Props {
+	entries: Publication[];
+}
+
+const { entries } = Astro.props;
+const groups = groupByYear(entries);
+---
+
+<div class="space-y-12">
+	{
+		groups.map((group) => (
+			<section>
+				<h2 class="mb-6 font-brand text-3xl tracking-normal">{group.year}</h2>
+
+				<div class="space-y-4">
+					{group.items.map((entry) => {
+						const href = titleHref(entry);
+						const venue = venueLine(entry);
+						const hasLinks = Boolean(entry.doi || entry.arxiv || entry.pdf || entry.site);
+						const abstractId = `abstract-${entry.key.replace(/[^a-zA-Z0-9]+/g, "-")}`;
+						return (
+							<article class="rounded-xl border border-primary/15 bg-bg-primary/50 p-6 dark:border-neutral-700 dark:bg-neutral-800/30">
+								<h3 class="mb-2 text-xl font-semibold text-neutral-800 dark:text-neutral-100">
+									{href ? (
+										<a href={href} class="hover:text-primary hover:underline">
+											{entry.title}
+										</a>
+									) : (
+										entry.title
+									)}
+								</h3>
+
+								<p class="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+									{entry.authors}
+									{entry.toAppear && <em class="ml-1">(To appear)</em>}
+									{entry.booktitle && (
+										<>
+											<br />
+											{entry.booktitle}
+											{entry.toAppear && <em class="ml-1">(To appear)</em>}
+										</>
+									)}
+									{!entry.toAppear && venue && (
+										<>
+											<br />
+											{venue}
+										</>
+									)}
+								</p>
+
+								{entry.abstract && (
+									<>
+										<button
+											type="button"
+											class="abstract-trigger mb-3 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary transition-colors hover:text-primary-strong dark:text-primary-light"
+											aria-expanded="false"
+											aria-controls={abstractId}
+										>
+											<span class="abstract-chevron flex transition-transform duration-300">
+												<ChevronRight size={13} />
+											</span>
+											Abstract
+										</button>
+										<div
+											id={abstractId}
+											class="abstract-content max-h-0 overflow-hidden transition-[max-height] duration-300 ease-in-out"
+										>
+											<p class="mb-5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+												{entry.abstract}
+											</p>
+										</div>
+									</>
+								)}
+
+								{hasLinks && (
+									<div class="flex flex-wrap gap-2">
+										{entry.pdf && (
+											<a
+												href={entry.pdf}
+												target="_blank"
+												rel="noopener"
+												class="pub-btn pub-btn-primary"
+											>
+												<FileText size={14} /> PDF
+											</a>
+										)}
+										{entry.doi && (
+											<a
+												href={`https://doi.org/${entry.doi}`}
+												target="_blank"
+												rel="noopener"
+												class="pub-btn pub-btn-soft"
+											>
+												<Link2 size={14} /> DOI
+											</a>
+										)}
+										{entry.arxiv && (
+											<a
+												href={entry.arxiv}
+												target="_blank"
+												rel="noopener"
+												class="pub-btn pub-btn-soft"
+											>
+												<ScrollText size={14} /> arXiv
+											</a>
+										)}
+										{entry.site && (
+											<a href={entry.site} class="pub-btn pub-btn-soft">
+												<Globe size={14} /> Website
+											</a>
+										)}
+									</div>
+								)}
+							</article>
+						);
+					})}
+				</div>
+			</section>
+		))
+	}
+</div>
+
+<script>
+	const triggers = document.querySelectorAll(".abstract-trigger");
+
+	function contentOf(trigger: Element) {
+		const id = trigger.getAttribute("aria-controls");
+		const content = id ? document.getElementById(id) : null;
+		return content instanceof HTMLElement ? content : null;
+	}
+
+	function collapse(trigger: Element) {
+		trigger.setAttribute("aria-expanded", "false");
+		const content = contentOf(trigger);
+		if (content) content.style.maxHeight = "";
+	}
+
+	/* Measured rather than a fixed cap, so a long abstract cannot be clipped. */
+	function expand(trigger: Element) {
+		trigger.setAttribute("aria-expanded", "true");
+		const content = contentOf(trigger);
+		if (content) content.style.maxHeight = `${content.scrollHeight}px`;
+	}
+
+	for (const trigger of triggers) {
+		trigger.addEventListener("click", () => {
+			const wasOpen = trigger.getAttribute("aria-expanded") === "true";
+			// Only one abstract stays open at a time.
+			for (const other of triggers) collapse(other);
+			if (!wasOpen) expand(trigger);
+		});
+	}
+
+	// Resizing rewraps the text, so a pinned max-height would start clipping.
+	window.addEventListener("resize", () => {
+		for (const trigger of triggers) {
+			if (trigger.getAttribute("aria-expanded") === "true") expand(trigger);
+		}
+	});
+</script>

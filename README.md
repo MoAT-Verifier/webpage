@@ -29,7 +29,7 @@ The pages are:
 | `/` | About: overview, results at a glance, backends, contact |
 | `/evaluation/` | Experimental setup, LTL properties, results table |
 | `/getting_started/` | Input, output, and components |
-| `/publications/` | The paper and the tools it builds on |
+| `/publications/` | The papers (generated, see below) and the tools MoAT builds on |
 
 The technical content is taken from the MoAT paper, whose LaTeX sources are kept in a
 separate repository rather than here. The paper is the source of truth for all claims,
@@ -38,6 +38,33 @@ formulas, and benchmark numbers — in particular, the results table in
 
 Site identity and metadata live in [`src/config/site.js`](src/config/site.js); the header
 navigation is [`src/collections/menu.json`](src/collections/menu.json).
+
+## Publications
+
+The publications page is generated from a BibTeX file. **To add a paper, add an entry to [`src/data/publications.bib`](src/data/publications.bib) and change nothing else.**
+
+[`src/lib/bibtex.ts`](src/lib/bibtex.ts) parses the file at build time and [`PublicationList.astro`](src/components/elements/PublicationList.astro) renders it, grouped by year (newest first, then `month`, then `sortkey`). Each abstract is
+collapsed behind a toggle, and only one is open at a time.
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `author` | yes | Printed verbatim as one line — write it exactly as it should appear |
+| `title` | yes | Links to `doi`, else `arxiv`, else `site` |
+| `year` | yes | Group heading and primary sort key; a missing year fails the build |
+| `booktitle` | — | Proceedings name, on its own line |
+| `series`, `volume`, `pages` | — | Render as `Series Volume, Pages, Year` |
+| `journal`, `volume`, `pages` | — | Journal alternative to the three above |
+| `abstract` | — | Shown in the collapsible panel |
+| `month`, `sortkey` | — | Ordering within a year only, never displayed |
+| `doi` | — | **Bare** DOI; `https://doi.org/` is added by the renderer |
+| `arxiv`, `pdf`, `site` | — | Full URLs (`site` may be root-relative) |
+| `to_appear = {}` | — | Presence-only flag; suppresses the series/volume/pages line |
+
+`doi`, `arxiv`, `pdf`, and `site` each add one button. Unknown fields (`biburl`, `ee`,
+`publisher`, …) are ignored, so pasting a DBLP entry does no harm — but rewrite its `author`
+field by hand, since DBLP's `A and B and C` form is printed as-is. `%` comment lines are
+skipped, and LaTeX escapes (`\_`), `--`, and protective braces (`{ACM}`) are decoded,
+though never inside URL fields.
 
 ## Deployment
 
