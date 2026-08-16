@@ -19,12 +19,25 @@ const apiUrl = siteConfig.api.url;
 // Shown before /api/v1/info answers; the server states the real default.
 const terminationFormula = "F 'AT(l_TERM)'";
 
+// The operator legend. Rendered from arrays rather than written out as markup
+// because Astro drops a whitespace-only text node that spans a line break, so
+// `</code>` at the end of one line and `<code>` at the start of the next run
+// together — and the formatter is free to rewrap the list at any time. The
+// separators below are expression values, whose spaces always survive.
+const temporalOperators = ["X", "F", "G", "U", "R"];
+const booleanOperators = ["&&", "||", "->", "NOT"];
+
+const separator = (index: number, total: number) =>
+	index === 0 ? "" : index === total - 1 ? ", and " : ", ";
+
 // Each example carries its whole query, so choosing one sets the mode too.
-// The two property examples are MoAT's own: `G F 'x <= 0'` over example01.ari
-// is the invocation its README uses to illustrate the formula syntax.
+// Recurrence is MoAT's own: `G F 'x <= 0'` over example01.ari is the
+// invocation its README uses to illustrate the formula syntax. Overflow is a
+// two-variable instance of the property class of the same name in the paper's
+// evaluation; `--variables="x y"` is what maps x and y onto Arg_0 and Arg_1.
 const examples = [
 	{
-		name: "Terminating loop",
+		name: "Terminating Loop",
 		summary: "while (x > 0) x = x - 1;",
 		mode: "termination",
 		formula: terminationFormula,
@@ -40,7 +53,7 @@ const examples = [
 `,
 	},
 	{
-		name: "Non-terminating loop",
+		name: "Non-Terminating Loop",
 		summary: "while (x > 0) x = x + 1;",
 		mode: "termination",
 		formula: terminationFormula,
@@ -56,54 +69,19 @@ const examples = [
 `,
 	},
 	{
-		name: "Nested loops",
-		summary: "The inner loop counts y down, the outer one x.",
-		mode: "termination",
-		formula: terminationFormula,
-		variables: "",
-		precondition: "",
+		name: "Overflow",
+		summary: "Do x and y stay inside the signed 32-bit range?",
+		mode: "property",
+		formula: "G ('x <= 2147483647' && 'y >= -2147483648')",
+		variables: "x y",
+		precondition: "'0 <= x' && 'x <= 100' && '0 <= y' && 'y <= 100'",
 		program: `(format LCTRS)
 (theory Ints)
 (fun l0 (-> Int Int Int))
 (fun l1 (-> Int Int Int))
-(fun l2 (-> Int Int Int))
 (entrypoint l0)
 (rule (l0 Arg_0 Arg_1) (l1 Arg_0 Arg_1))
-(rule (l1 Arg_0 Arg_1) (l2 Arg_0 Arg_1) :guard (> Arg_0 0))
-(rule (l2 Arg_0 Arg_1) (l2 Arg_0 (- Arg_1 1)) :guard (> Arg_1 0))
-(rule (l2 Arg_0 Arg_1) (l1 (- Arg_0 1) Arg_1) :guard (<= Arg_1 0))
-`,
-	},
-	{
-		name: "Recurrence",
-		summary: "Is the first variable infinitely often non-positive?",
-		mode: "property",
-		formula: "G F 'x <= 0'",
-		variables: "x",
-		precondition: "",
-		program: `(format LCTRS)
-(theory Ints)
-(fun l0 (-> Int Int))
-(fun l1 (-> Int Int))
-(entrypoint l0)
-(rule (l0 Arg_0) (l1 Arg_0))
-(rule (l1 Arg_0) (l1 (- Arg_0 1)) :guard (> Arg_0 0))
-`,
-	},
-	{
-		name: "Reach-avoid",
-		summary: "Does x stay positive until location l1 is reached?",
-		mode: "property",
-		formula: "'x > 0' U 'AT(l1)'",
-		variables: "x",
-		precondition: "'x > 0'",
-		program: `(format LCTRS)
-(theory Ints)
-(fun l0 (-> Int Int))
-(fun l1 (-> Int Int))
-(entrypoint l0)
-(rule (l0 Arg_0) (l0 (- Arg_0 1)) :guard (> Arg_0 1))
-(rule (l0 Arg_0) (l1 Arg_0) :guard (<= Arg_0 1))
+(rule (l1 Arg_0 Arg_1) (l1 (+ Arg_0 1) (- Arg_1 1)) :guard (> Arg_1 0))
 `,
 	},
 ];
@@ -111,7 +89,7 @@ const examples = [
 
 <Layout
 	title="Web Interface - MoAT"
-	description="Check an LTL property of an integer transition system with MoAT, in the browser."
+	description="Check an LTL Property of an Integer Transition System with MoAT, in your Browser."
 	keywords="MoAT web interface, LTL model checking online, termination checker, integer transition system, ARI format"
 >
 	<main class="site-container">
@@ -121,143 +99,10 @@ const examples = [
 		/>
 
 		<div class="mx-auto max-w-4xl pb-8">
-			<!-- What this does -->
-			<div
-				class="mb-10 flex gap-4 rounded-xl border border-dashed border-primary/30 bg-bg-secondary/50 p-5 dark:border-neutral-600 dark:bg-neutral-900/40"
-			>
-				<Info class="mt-0.5 h-5 w-5 flex-none text-primary dark:text-primary-light" />
-				<div class="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
-					<p class="mb-1 font-semibold text-neutral-800 dark:text-neutral-100">
-						Choose a property, or keep the default termination check.
-					</p>
-					<p>
-						Atomic propositions are polynomial inequations like <code
-							class="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[13px] text-primary dark:bg-primary/20 dark:text-primary-light"
-							>'x &gt; 0'</code
-						> or locations like <code
-							class="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[13px] text-primary dark:bg-primary/20 dark:text-primary-light"
-							>'AT(l0)'</code
-						>, always in single quotes. All operators have the <em>same</em> precedence and associate to
-						the left, so parenthesise where the grouping matters. Programs are written in the <a
-							href="/getting_started/"
-							class="font-medium text-primary hover:underline dark:text-primary-light">ARI format</a
-						>; they run on a server at RWTH Aachen, in a scratch directory that is deleted when the
-						analysis ends.
-					</p>
-				</div>
-			</div>
-
 			<form id="moat-form" data-api={apiUrl} data-mode="termination" novalidate>
-				<!-- Mode -->
-				<div class="mb-5 flex flex-wrap items-center gap-3">
-					<div
-						class="inline-flex rounded-xl border border-primary/20 bg-bg-secondary/60 p-1 dark:border-neutral-600 dark:bg-neutral-800/60"
-						role="group"
-						aria-label="What to check"
-					>
-						<button
-							type="button"
-							id="moat-mode-termination"
-							class="mode-btn rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-							aria-pressed="true"
-						>
-							Termination
-						</button>
-						<button
-							type="button"
-							id="moat-mode-property"
-							class="mode-btn rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-							aria-pressed="false"
-						>
-							LTL property
-						</button>
-					</div>
-					<p id="moat-mode-hint" class="text-xs text-neutral-500 dark:text-neutral-400"></p>
-				</div>
-
-				<!-- The question -->
-				<fieldset
-					id="moat-query"
-					class="mb-5 rounded-xl border border-primary/10 bg-bg-primary/50 p-5 transition-opacity dark:border-neutral-700 dark:bg-neutral-800/30"
-				>
-					<legend class="sr-only">The property to check</legend>
-
-					<label for="moat-formula" class="moat-label">LTL formula</label>
-					<div class="moat-editor" data-editor>
-						<pre class="moat-layer moat-highlight" aria-hidden="true" data-highlight></pre>
-						<textarea
-							id="moat-formula"
-							name="formula"
-							rows="2"
-							spellcheck="false"
-							autocomplete="off"
-							autocapitalize="off"
-							autocorrect="off"
-							data-symbols
-							class="moat-layer moat-input"></textarea>
-					</div>
-
-					<div class="mt-4 grid gap-4 sm:grid-cols-2">
-						<div>
-							<label for="moat-variables" class="moat-label">Variables</label>
-							<input
-								id="moat-variables"
-								name="variables"
-								type="text"
-								spellcheck="false"
-								autocomplete="off"
-								autocapitalize="off"
-								autocorrect="off"
-								placeholder="x y"
-								class="moat-layer moat-input w-full"
-							/>
-							<p class="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-								The order in which the formula's variables map onto the program's.
-							</p>
-						</div>
-						<div>
-							<label for="moat-precondition" class="moat-label">Precondition</label>
-							<div class="moat-editor" data-editor>
-								<pre class="moat-layer moat-highlight" aria-hidden="true" data-highlight></pre>
-								<textarea
-									id="moat-precondition"
-									name="precondition"
-									rows="1"
-									spellcheck="false"
-									autocomplete="off"
-									autocapitalize="off"
-									autocorrect="off"
-									placeholder="'x > 0'"
-									data-symbols
-									class="moat-layer moat-input"></textarea>
-							</div>
-							<p class="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">
-								Optional constraint on the initial state.
-							</p>
-						</div>
-					</div>
-
-					<p class="mt-4 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
-						<span class="font-medium text-neutral-600 dark:text-neutral-300">Operators</span>
-						&mdash; temporal <code class="moat-op">X</code> <code class="moat-op">F</code>
-						<code class="moat-op">G</code> <code class="moat-op">U</code>
-						<code class="moat-op">R</code>; boolean <code class="moat-key">&amp;&amp;</code>
-						<code class="moat-key">||</code> <code class="moat-key">-&gt;</code>
-						<code class="moat-key">NOT</code>. Typing <code class="moat-key">&amp;&amp;</code>,
-						<code class="moat-key">||</code> or <code class="moat-key">-&gt;</code> shows &#8743;, &#8744;
-						and &#8594;; MoAT receives the plain spelling either way.
-					</p>
-					<p
-						id="moat-query-error"
-						role="alert"
-						class="mt-3 hidden rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:bg-red-400/10 dark:text-red-300"
-					>
-					</p>
-				</fieldset>
-
 				<!-- Program -->
 				<div
-					class="rounded-xl border border-primary/10 bg-bg-primary/50 p-5 dark:border-neutral-700 dark:bg-neutral-800/30"
+					class="mb-5 rounded-xl border border-primary/10 bg-bg-primary/50 p-5 dark:border-neutral-700 dark:bg-neutral-800/30"
 				>
 					<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
 						<div class="flex flex-wrap items-center gap-2">
@@ -338,8 +183,148 @@ const examples = [
 					</div>
 				</div>
 
+				<!-- What this does -->
+				<div
+					class="mb-5 flex gap-4 rounded-xl border border-dashed border-primary/30 bg-bg-secondary/50 p-5 dark:border-neutral-600 dark:bg-neutral-900/40"
+				>
+					<Info class="mt-0.5 h-5 w-5 flex-none text-primary dark:text-primary-light" />
+					<div class="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+						<p class="mb-1 font-semibold text-neutral-800 dark:text-neutral-100">
+							Choose a property, or keep the default termination check.
+						</p>
+						<p>
+							Atomic propositions are polynomial inequations like <code
+								class="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[13px] text-primary dark:bg-primary/20 dark:text-primary-light"
+								>'x &gt; 0'</code
+							> or locations like <code
+								class="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[13px] text-primary dark:bg-primary/20 dark:text-primary-light"
+								>'AT(l0)'</code
+							>, always in single quotes. All operators have the <em>same</em> precedence and associate to
+							the left, so parenthesise where the grouping matters. Programs are written in the <a
+								href="/getting_started/"
+								class="font-medium text-primary hover:underline dark:text-primary-light">ARI format</a
+							>.
+						</p>
+					</div>
+				</div>
+
+				<!-- Mode -->
+				<div class="mb-5 flex flex-wrap items-center gap-3">
+					<div
+						class="inline-flex rounded-xl border border-primary/20 bg-bg-secondary/60 p-1 dark:border-neutral-600 dark:bg-neutral-800/60"
+						role="group"
+						aria-label="What to check"
+					>
+						<button
+							type="button"
+							id="moat-mode-termination"
+							class="mode-btn rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+							aria-pressed="true"
+						>
+							Termination
+						</button>
+						<button
+							type="button"
+							id="moat-mode-property"
+							class="mode-btn rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+							aria-pressed="false"
+						>
+							LTL Property
+						</button>
+					</div>
+					<p id="moat-mode-hint" class="text-xs text-neutral-500 dark:text-neutral-400"></p>
+				</div>
+
+				<!-- The question -->
+				<fieldset
+					id="moat-query"
+					class="mb-5 rounded-xl border border-primary/10 bg-bg-primary/50 p-5 transition-opacity dark:border-neutral-700 dark:bg-neutral-800/30"
+				>
+					<legend class="sr-only">The property to check</legend>
+
+					<label for="moat-formula" class="moat-label">LTL formula</label>
+					<div class="moat-editor" data-editor>
+						<pre class="moat-layer moat-highlight" aria-hidden="true" data-highlight></pre>
+						<textarea
+							id="moat-formula"
+							name="formula"
+							rows="2"
+							spellcheck="false"
+							autocomplete="off"
+							autocapitalize="off"
+							autocorrect="off"
+							data-symbols
+							class="moat-layer moat-input"></textarea>
+					</div>
+
+					<div class="mt-4 grid gap-4 sm:grid-cols-2">
+						<div>
+							<label for="moat-variables" class="moat-label">Variables</label>
+							<input
+								id="moat-variables"
+								name="variables"
+								type="text"
+								spellcheck="false"
+								autocomplete="off"
+								autocapitalize="off"
+								autocorrect="off"
+								placeholder="x y"
+								class="moat-layer moat-input w-full"
+							/>
+							<p class="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+								The order in which the formula's variables map onto the program's.
+							</p>
+						</div>
+						<div>
+							<label for="moat-precondition" class="moat-label">Precondition</label>
+							<div class="moat-editor" data-editor>
+								<pre class="moat-layer moat-highlight" aria-hidden="true" data-highlight></pre>
+								<textarea
+									id="moat-precondition"
+									name="precondition"
+									rows="1"
+									spellcheck="false"
+									autocomplete="off"
+									autocapitalize="off"
+									autocorrect="off"
+									placeholder="'x > 0'"
+									data-symbols
+									class="moat-layer moat-input"></textarea>
+							</div>
+							<p class="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+								Optional constraint on the initial state.
+							</p>
+						</div>
+					</div>
+
+					<p class="mt-4 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+						<span class="font-medium text-neutral-600 dark:text-neutral-300">Operators</span>{" "}
+						&mdash; temporal {
+							temporalOperators.map((operator, index) => (
+								<>
+									{separator(index, temporalOperators.length)}
+									<code class="moat-op">{operator}</code>
+								</>
+							))
+						}; boolean {
+							booleanOperators.map((operator, index) => (
+								<>
+									{separator(index, booleanOperators.length)}
+									<code class="moat-key">{operator}</code>
+								</>
+							))
+						}.
+					</p>
+					<p
+						id="moat-query-error"
+						role="alert"
+						class="mt-3 hidden rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:bg-red-400/10 dark:text-red-300"
+					>
+					</p>
+				</fieldset>
+
 				<!-- Actions -->
-				<div class="mt-5 flex flex-wrap items-center gap-3">
+				<div class="flex flex-wrap items-center gap-3">
 					<button
 						type="submit"
 						id="moat-submit"
@@ -694,12 +679,16 @@ const examples = [
 			let lastQuery: Query | null = null;
 
 			// MoAT's own spellings, and what the editor shows instead. `<->`
-			// comes first so that it is not eaten as `<` followed by `->`.
+			// comes first so that it is not eaten as `<` followed by `->`; the
+			// comparisons share no prefix with the connectives, so their place
+			// in the list does not matter.
 			const SYMBOLS: Array<[string, string]> = [
 				["<->", "↔"],
 				["->", "→"],
 				["&&", "∧"],
 				["||", "∨"],
+				["<=", "≤"],
+				[">=", "≥"],
 			];
 
 			// MoAT's lexer has no biconditional (src/parse/lexer.cpp): it knows
