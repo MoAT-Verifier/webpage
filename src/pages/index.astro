@@ -1,11 +1,18 @@
 ---
-import Layout from "@/layouts/Layout.astro";
 import SectionHeader from "@/components/elements/SectionHeader.astro";
 import Badge from "@/components/ui/Badge.astro";
 import Button from "@/components/ui/Button.astro";
 import Wordmark from "@/components/ui/Wordmark.astro";
 import { siteConfig } from "@/config/site";
-import { ArrowRight, BookOpen, Gauge, GitBranch, GitFork, Rocket } from "@lucide/astro";
+import Layout from "@/layouts/Layout.astro";
+import {
+	ArrowRight,
+	BookOpen,
+	Gauge,
+	GitBranch,
+	GitFork,
+	Rocket,
+} from "@lucide/astro";
 
 // The verification pipeline, as described in the paper.
 const pipeline = [
@@ -35,9 +42,21 @@ const MATH = /(\bP\b|¬φ|φ|\bB\b)/u;
 const splitMath = (text: string) => text.split(MATH);
 
 const stats = [
-	{ value: "1222", label: "benchmarks solved", note: "most of all compared tools" },
-	{ value: "> 96 %", label: "coverage", note: "across all four property classes" },
-	{ value: "1.11 s", label: "average runtime", note: "fastest tool in the comparison" },
+	{
+		value: "1222",
+		label: "benchmarks solved",
+		note: "most of all compared tools",
+	},
+	{
+		value: "> 96 %",
+		label: "coverage",
+		note: "across all four property classes",
+	},
+	{
+		value: "1.11 s",
+		label: "average runtime",
+		note: "fastest tool in the comparison",
+	},
 	{ value: "318", label: "C programs", note: "from SV-COMP and TermComp" },
 ];
 ---
@@ -148,7 +167,6 @@ const stats = [
 	</section>
 
 	<main class="site-container">
-		<!-- About -->
 		<section id="about" class="mx-auto max-w-3xl pt-20 md:pt-28">
 			<h2 class="mb-6 font-brand text-3xl tracking-normal sm:text-4xl">About</h2>
 
@@ -192,7 +210,6 @@ const stats = [
 			</div>
 		</section>
 
-		<!-- Results at a glance -->
 		<section class="pt-20 md:pt-28">
 			<SectionHeader
 				title="Results at a glance"
@@ -221,7 +238,6 @@ const stats = [
 			</div>
 		</section>
 
-		<!-- Backends -->
 		<section class="pt-20 md:pt-28">
 			<SectionHeader
 				title="Backends"

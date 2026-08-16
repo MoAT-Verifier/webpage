@@ -36,7 +36,6 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, Noto Sans SC, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-body: "Inter", ui-sans-serif, system-ui, Noto Sans SC, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --max-screen: 1200px;
-  --inner-screen: 800px;
 
   --color-neutral-50: #f7f9fc;
   --color-neutral-100: #edf1f8;
@@ -57,10 +56,9 @@
   --color-primary-light: #8fb9ff;
   --color-primary-light-dark: #bcd8ff;
   --color-primary-lighter: #6da7ff;
-  /* Article-specific variables */
+  /* Tinted surfaces, used by the publication link chips. */
   --color-primary-bg: var(--color-bg-primary-light);
   --color-primary-bg-light: var(--color-bg-secondary);
-
 
   --color-btn-primary: #2d6dc3;
   --color-btn-primary-hover: #0066ff;
@@ -161,16 +159,9 @@ html.dark {
   --tw-ring-color: rgba(var(--color-primary-rgb), 0.3);
 }
 
-/* Add typography styles */
 @layer components {
   .font-brand{
     font-weight: 400!important;
-  }
-  .prose {
-    max-width: 65ch;
-  }
-  .prose img {
-    border-radius: 30px;
   }
   .container{
     max-width: var(--max-screen);
@@ -185,25 +176,6 @@ html.dark {
     margin-right: auto;
     padding-left: 1rem;
     padding-right: 1rem;
-  }
-  .inner-container {
-    max-width: var(--inner-screen);
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  .gradient-title {
-    background: linear-gradient(to right, #746aff, #0b046d);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
- .gradient-title-light{
-    background: linear-gradient(to right, #bcb7ff, #746aff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
   }
 }
 
@@ -297,7 +269,7 @@ html.dark h1,html.dark h2,html.dark h3{
   color:var(--color-text-primary-dark);
 }
 
-/* Custom CSS styles */
+/* The sun and moon of the dark-mode toggle turn on hover. */
 #sun {
   transform: rotate(0);
 }
@@ -314,11 +286,6 @@ html.dark h1,html.dark h2,html.dark h3{
    transform: rotate(45deg);
 }
 
-
-html.dark #darkToggle:hover .horizon {
-  border-color: #718096 !important;
-}
-
 html{
   font-family: var(--font-sans);
   scroll-behavior: smooth;
@@ -326,48 +293,6 @@ html{
 html.dark {
   color-scheme: dark;
 }
-
-.horizon .setting {
-  animation: 1s ease 0s 1 setting;
-}
-
-.horizon .rising {
-  animation: 1s ease 0s 1 rising;
-}
-
-@keyframes setting {
-  0% {
-    transform: translate3d(0, 10px, 0);
-  }
-
-  40% {
-    transform: translate3d(0, -2px, 0);
-  }
-
-  to {
-    transform: translate3d(0, 30px, 0);
-  }
-}
-
-@keyframes rising {
-  0% {
-    opacity: 0;
-    transform: translate3d(0, 30px, 0);
-  }
-
-  40% {
-    opacity: 1;
-    transform: translate3d(0, -2px, 0);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 10px, 0);
-  }
-}
-
-
-
 
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,

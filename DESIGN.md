@@ -17,9 +17,9 @@ runtime theme state.
 - `src/styles/global.css` — the palette, layout tokens, `@font-face`, global styles, and
   the `html.dark` overrides. This is the single source of truth for color.
 - `tailwind.config.mjs` — content scanning and the `darkMode: "class"` strategy.
-- `src/layouts/Layout.astro` — page shell, CSS imports, dark-mode boot script.
-- `src/components/sections/Header.astro` — navigation, mobile menu, dark-mode toggle.
-- `src/assets/js/main.js` — sticky header and the dark-mode toggle behavior.
+- `src/layouts/Layout.astro` — page shell, CSS import, dark-mode boot script.
+- `src/components/sections/Header.astro` — navigation, mobile menu, sticky header,
+  and the dark-mode toggle.
 
 ## Color Tokens
 
@@ -102,9 +102,8 @@ Rules:
 | Token/Class | Value | Usage |
 | --- | --- | --- |
 | `--max-screen` | `1200px` | Main site width |
-| `--inner-screen` | `800px` | Articles and narrow content |
 | `.site-container` | max width + horizontal padding | Page sections |
-| `.inner-container` | inner max width + padding | Narrow content |
+| `.container` | the same, used by the footer | Footer |
 
 ## Dark Mode
 
@@ -113,7 +112,8 @@ Class-based, and the only runtime visual state the site has.
 - Tailwind config: `darkMode: "class"`.
 - Initial state is applied inline in `Layout.astro` before paint, to avoid a flash.
 - Preference is stored in `localStorage` under `dark_mode`.
-- Toggle behavior lives in `src/assets/js/main.js`; `Header.astro` only syncs the icons.
+- Toggle behavior lives in the inline script of `Header.astro`, which also keeps the two
+  toggles (desktop and mobile) in step.
 - Dark overrides live in the `html.dark` block in `global.css`.
 
 Every new surface needs both light and dark styling.
@@ -126,13 +126,13 @@ Every new surface needs both light and dark styling.
 | Footer | `src/components/sections/Footer.astro` | Footer navigation |
 | Button | `src/components/ui/Button.astro` | CTA and link buttons |
 | Badge | `src/components/ui/Badge.astro` | Small labels |
-| AccordionItem | `src/components/ui/AccordionItem.astro` | Collapsible item |
-| BrowserFrame | `src/components/ui/BrowserFrame.astro` | Browser-style frame |
 | Logo | `src/components/ui/Logo.astro` | Brand mark |
+| Wordmark | `src/components/ui/Wordmark.astro` | "MoAT" with the A turned into ∀ |
 | TopBg | `src/components/ui/TopBg.astro` | Decorative page-top background |
+| ToTop | `src/components/ui/ToTop.astro` | Back-to-top button |
 | PageHeader | `src/components/elements/PageHeader.astro` | Page-level header |
 | SectionHeader | `src/components/elements/SectionHeader.astro` | Section title and description |
-| SeparatorLine | `src/components/elements/SeparatorLine.astro` | Dashed divider |
+| PublicationList | `src/components/elements/PublicationList.astro` | The publications page |
 
 ## UI Rules
 
@@ -155,6 +155,8 @@ Every new surface needs both light and dark styling.
 
 - `public/favicon.svg`
 - `public/fonts/revalia-*.woff2` — self-hosted display font
-- `public/assets/preview.jpg` — Open Graph image, still the template's screenshot and due
-  for replacement
 - `public/CNAME` — custom domain for GitHub Pages; deleting it breaks the domain
+
+There is no Open Graph image yet. `siteConfig.meta.image` is empty, and `Meta.astro`
+emits no `og:image` while it stays that way; add a file under `public/` and point the
+field at it to bring the tag back.

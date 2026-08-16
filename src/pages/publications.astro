@@ -3,7 +3,7 @@ import PageHeader from "@/components/elements/PageHeader.astro";
 import PublicationList from "@/components/elements/PublicationList.astro";
 import bibSource from "@/data/publications.bib?raw";
 import Layout from "@/layouts/Layout.astro";
-import { toPublications } from "@/lib/bibtex";
+import { toPublications } from "@/lib/publications";
 import { ExternalLink } from "@lucide/astro";
 
 // Single source of truth: add or edit entries in src/data/publications.bib.
@@ -32,13 +32,6 @@ const backends = [
 		label: "spot.lre.epita.fr",
 	},
 ];
-
-const compared = [
-	{ name: "MuVal", url: "https://github.com/hiroshi-unno/coar", label: "github.com/hiroshi-unno/coar" },
-	{ name: "nuXmv", url: "https://nuxmv.fbk.eu/", label: "nuxmv.fbk.eu" },
-	{ name: "Ultimate", url: "https://ultimate-pa.org/", label: "ultimate-pa.org" },
-	{ name: "LTL-VerP", url: "", label: "" },
-];
 ---
 
 <Layout
@@ -58,7 +51,6 @@ const compared = [
 				<PublicationList entries={publications} />
 			</section>
 
-			<!-- Backends -->
 			<section class="mb-16">
 				<h2 class="mb-3 font-brand text-3xl tracking-normal">Tools MoAT builds on</h2>
 				<p class="mb-6 text-base leading-relaxed text-neutral-600 dark:text-neutral-300">

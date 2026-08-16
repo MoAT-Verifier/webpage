@@ -1,11 +1,11 @@
 ---
-import PageLayout from "@/layouts/PageLayout.astro";
 import Button from "@/components/ui/Button.astro";
-import { ArrowLeft, Compass, House, Search, ShieldAlert } from "@lucide/astro";
+import Layout from "@/layouts/Layout.astro";
+import { ArrowLeft, Compass, House, Search } from "@lucide/astro";
 ---
 
-<PageLayout title="Page Not Found - MoAT" description="The page you're looking for doesn't exist.">
-  <section class="site-container py-14 md:py-24">
+<Layout title="Page Not Found - MoAT" description="The page you're looking for doesn't exist.">
+  <main class="site-container py-14 md:py-24">
     <div class="grid min-h-[62vh] items-center gap-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(420px,1fr)]">
       <div>
 
@@ -92,8 +92,8 @@ import { ArrowLeft, Compass, House, Search, ShieldAlert } from "@lucide/astro";
         </div>
       </div>
     </div>
-  </section>
-</PageLayout>
+  </main>
+</Layout>
 
 <script>
   const missingPath = document.getElementById('missing-path');

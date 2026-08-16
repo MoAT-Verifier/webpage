@@ -257,7 +257,9 @@ const examples = [
 							class="moat-layer moat-input"></textarea>
 					</div>
 
-					<div class="mt-4 grid gap-4 sm:grid-cols-2">
+					<!-- Neither field means anything for plain termination, so
+					     termination mode hides this row rather than greying it. -->
+					<div id="moat-query-fields" class="mt-4 grid gap-4 sm:grid-cols-2">
 						<div>
 							<label for="moat-variables" class="moat-label">Variables</label>
 							<input
@@ -647,6 +649,7 @@ const examples = [
 				"moat-precondition"
 			) as HTMLTextAreaElement;
 			const queryBox = document.getElementById("moat-query") as HTMLFieldSetElement;
+			const queryFields = document.getElementById("moat-query-fields") as HTMLElement;
 			const queryError = document.getElementById("moat-query-error") as HTMLElement;
 			const timeoutField = document.getElementById("moat-timeout") as HTMLInputElement;
 			const timeoutHint = document.getElementById("moat-timeout-hint") as HTMLElement;
@@ -675,9 +678,15 @@ const examples = [
 				document.getElementById("moat-examples")?.textContent ?? "[]"
 			) as Example[];
 
+			// What this page is willing to submit, whatever the service would
+			// accept. A program pasted into a browser textarea is meant to be
+			// read on screen; the service's own limit is the backstop, and
+			// lowering it there (MOAT_WEB_MAX_PROGRAM_BYTES) lowers this too.
+			const PROGRAM_LIMIT = 10000;
+
 			// Overwritten by /api/v1/info; these are only what the page shows
 			// before the server has answered.
-			let maxProgramBytes = 65536;
+			let maxProgramBytes = PROGRAM_LIMIT;
 			let terminationFormula = "F 'AT(l_TERM)'";
 			let temporal = new Set(["X", "F", "G", "U", "R", "UDC", "RDC", "UC", "RC", "FC", "GC"]);
 			let apiAvailable = true;
@@ -698,6 +707,9 @@ const examples = [
 				["||", "∨"],
 				["<=", "≤"],
 				[">=", "≥"],
+				// Whatever spacing was typed around NOT is kept, so `NOT 'x > 0'`
+				// comes back as it went in.
+				["NOT", "¬"],
 			];
 
 			/**
@@ -852,7 +864,14 @@ const examples = [
 				return "";
 			}
 
-			/** The sentence shown for a failed run, and MoAT's own words for it. */
+			/**
+			 * The sentence shown for a failed run, and MoAT's own words for it.
+			 *
+			 * The sentence carries the explanation; `detail` is what MoAT
+			 * actually said, kept underneath for anyone who would rather read
+			 * the diagnostic than the translation of it. It is dropped when the
+			 * sentence already is MoAT's message.
+			 */
 			function describeError(result: CheckResult): { text: string; detail: string } {
 				const raw = (result.message ?? "").trim();
 				const code = result.error_code ?? "";
@@ -974,7 +993,9 @@ const examples = [
 			function updateCli() {
 				const query = currentQuery();
 				let command = `moat -i program.ari --ltl-formula=${quote(query.formula)}`;
-				command += ` --variables=${quote(query.variables)}`;
+				// Both default to nothing, so an empty one is noise rather than
+				// part of the run being described.
+				if (query.variables) command += ` --variables=${quote(query.variables)}`;
 				if (query.precondition) command += ` --precondition=${quote(query.precondition)}`;
 				command += " --format ari";
 				cliBlock.textContent = command;
@@ -1000,7 +1021,7 @@ const examples = [
 			function refresh() {
 				const size = byteLength(programField.value);
 				const overLimit = size > maxProgramBytes;
-				sizeHint.textContent = `${size.toLocaleString()} of ${maxProgramBytes.toLocaleString()} bytes`;
+				sizeHint.textContent = `${size.toLocaleString()} of ${maxProgramBytes.toLocaleString()} characters`;
 				// Inline, so it wins over the element's own text colour without
 				// depending on the order Tailwind emits the two utilities in.
 				sizeHint.style.color = overLimit ? "#ef4444" : "";
@@ -1018,7 +1039,28 @@ const examples = [
 				updateCli();
 			}
 
-			function setMode(next: "termination" | "property") {
+			/** The example an LTL query starts from when the user has none. */
+			const ltlDefault = examples.find((example) => example.mode === "property");
+
+			/**
+			 * Puts that example's query in the three fields.
+			 *
+			 * Its formula is about the variables of its own program, so the
+			 * program comes with it — but only when the one on screen is still
+			 * an example. Anything else was typed or uploaded here, and is not
+			 * this page's to throw away.
+			 */
+			function useLtlDefault() {
+				if (!ltlDefault) return;
+				if (examples.some((example) => example.program === programField.value)) {
+					programField.value = ltlDefault.program;
+				}
+				formulaField.value = toUnicode(ltlDefault.formula);
+				variablesField.value = ltlDefault.variables;
+				preconditionField.value = toUnicode(ltlDefault.precondition);
+			}
+
+			function setMode(next: "termination" | "property", prefill = true) {
 				mode = next;
 				form.dataset.mode = next;
 				const fixed = next === "termination";
@@ -1030,15 +1072,23 @@ const examples = [
 				// as for the eye. Setting it reflects the attribute the CSS
 				// below dims on.
 				queryBox.disabled = fixed;
+				// Termination takes neither a variable order nor a precondition,
+				// so those two are gone rather than greyed.
+				queryFields.classList.toggle("hidden", fixed);
 				submitLabel.textContent = fixed ? "Check termination" : "Check property";
 				modeHint.textContent = fixed
 					? `Fixed formula ${terminationFormula} — the program terminates exactly when it holds.`
 					: "Any formula MoAT accepts, over the variables listed below.";
 
+				// Each mode carries its own query, so switching swaps all three
+				// fields rather than leaving the other mode's answer behind or
+				// an empty form to fill in.
 				if (fixed) {
 					formulaField.value = terminationFormula;
 					variablesField.value = "";
 					preconditionField.value = "";
+				} else if (prefill) {
+					useLtlDefault();
 				}
 				paint(formulaField);
 				paint(preconditionField);
@@ -1193,7 +1243,7 @@ const examples = [
 					if (!response.ok) throw new Error(String(response.status));
 					const info = await response.json();
 					const limits = info.limits;
-					maxProgramBytes = limits.max_program_bytes;
+					maxProgramBytes = Math.min(limits.max_program_bytes, PROGRAM_LIMIT);
 					timeoutField.min = String(limits.min_timeout);
 					timeoutField.max = String(limits.max_timeout);
 					timeoutField.value = String(limits.default_timeout);
@@ -1374,7 +1424,8 @@ const examples = [
 
 			function applyExample(example: Example) {
 				programField.value = example.program;
-				setMode(example.mode === "property" ? "property" : "termination");
+				// The example carries its own query, so no default is wanted.
+				setMode(example.mode === "property" ? "property" : "termination", false);
 				if (example.mode === "property") {
 					formulaField.value = toUnicode(example.formula);
 					variablesField.value = example.variables;
