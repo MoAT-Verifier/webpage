@@ -23,8 +23,7 @@ pnpm check      # biome: format and lint
 
 ### Running against a local analysis service
 
-The `/interface/` page talks to the analysis service from the
-[webinterface](https://github.com/MoAT-Verifier/webinterface) repository. To develop
+The `/interface/` page talks to the analysis service from the webinterface. To develop
 against a local one, run its image and point the site at it, in two terminals:
 
 ```bash
@@ -45,11 +44,6 @@ The pages are:
 | `/evaluation/` | Experimental setup, LTL properties, results table |
 | `/getting_started/` | Input, output, and components |
 | `/publications/` | The papers (generated, see below) and the tools MoAT builds on |
-
-The technical content is taken from the MoAT paper, whose LaTeX sources are kept in a
-separate repository rather than here. The paper is the source of truth for all claims,
-formulas, and benchmark numbers — in particular, the results table in
-`src/pages/evaluation.astro` is a transcription of the evaluation table in that paper.
 
 Site identity and metadata live in [`src/config/site.js`](src/config/site.js); the header
 navigation is [`src/data/menu.json`](src/data/menu.json).
