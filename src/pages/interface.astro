@@ -25,7 +25,7 @@ const terminationFormula = "F 'AT(l_TERM)'";
 // together — and the formatter is free to rewrap the list at any time. The
 // separators below are expression values, whose spaces always survive.
 const temporalOperators = ["X", "F", "G", "U", "R"];
-const booleanOperators = ["&&", "||", "->", "NOT"];
+const booleanOperators = ["&&", "||", "->", "<->", "NOT"];
 
 const separator = (index: number, total: number) =>
 	index === 0 ? "" : index === total - 1 ? ", and " : ", ";
@@ -361,6 +361,12 @@ const examples = [
 						></span>
 						<p id="moat-verdict-text" class="text-sm text-neutral-600 dark:text-neutral-300"></p>
 					</div>
+					<!-- MoAT's own diagnostic, kept for anyone who wants the detail. -->
+					<p
+						id="moat-detail"
+						class="mt-3 hidden overflow-x-auto rounded-lg bg-neutral-500/10 px-3 py-2 font-mono text-xs leading-relaxed text-neutral-600 dark:bg-neutral-100/5 dark:text-neutral-400"
+					>
+					</p>
 					<p id="moat-runtime" class="mt-3 text-xs text-neutral-500 dark:text-neutral-400"></p>
 					<button
 						type="button"
@@ -611,6 +617,8 @@ const examples = [
 			output: string;
 			truncated: boolean;
 			runtime_seconds: number;
+			/** MoAT's stable code for the failure, e.g. "E305". */
+			error_code?: string | null;
 			message: string | null;
 		}
 
@@ -650,6 +658,7 @@ const examples = [
 			const resultPanel = document.getElementById("moat-result") as HTMLElement;
 			const verdictBadge = document.getElementById("moat-verdict") as HTMLElement;
 			const verdictText = document.getElementById("moat-verdict-text") as HTMLElement;
+			const detailLine = document.getElementById("moat-detail") as HTMLElement;
 			const runtimeLine = document.getElementById("moat-runtime") as HTMLElement;
 			const proofButton = document.getElementById("moat-open-proof") as HTMLButtonElement;
 			const outputWrapper = document.getElementById("moat-output-wrapper") as HTMLDetailsElement;
@@ -691,11 +700,85 @@ const examples = [
 				[">=", "≥"],
 			];
 
-			// MoAT's lexer has no biconditional (src/parse/lexer.cpp): it knows
-			// &&, ||, ->, and NOT. The editor still shows ↔ for `<->` so that
-			// typing it is not silently swallowed, but the run is blocked here
-			// rather than sent off to come back as a parse error.
-			const BICONDITIONAL = "↔";
+			/**
+			 * MoAT's error codes, said without jargon.
+			 *
+			 * Every diagnostic MoAT raises before the backends take over is
+			 * tagged with a stable code (`src/util/error.hpp`), which the
+			 * service reports as `error_code`. Translating the code rather than
+			 * the wording means this table does not break when a message is
+			 * rephrased, and the page never has to re-implement MoAT's parser
+			 * to guess what went wrong — MoAT has already decided.
+			 *
+			 * Only what a submission can actually provoke is listed. The
+			 * environment codes at the end are the exception: they are the
+			 * server's fault, not the user's, and saying so is the whole point
+			 * of naming them.
+			 */
+			const ERRORS: Record<string, string> = {
+				// --- the formula, character by character ---
+				E101: "The formula uses a character that is not part of MoAT's syntax. A formula is built from atomic propositions in single quotes such as 'x > 0', the operators X, F, G, U, R, NOT, &&, ||, -> and <->, and parentheses.",
+
+				// --- inside an atomic proposition, or in the precondition ---
+				E201: "An atomic proposition breaks off in the middle. Each one compares two arithmetic expressions, as in 'x + 1 > 0'.",
+				E202: "A parenthesis inside an atomic proposition is never closed.",
+				E203: "The exponent after ** has to be a whole number, as in 'x ** 2 > 0'.",
+				E204: "The exponent after ** is too large.",
+				E205: "An atomic proposition has no comparison in it. Each one needs <, <=, > or >=, as in 'x > 0'.",
+				E206: "A parenthesis in the precondition is never closed.",
+				E207: "There is text left over at the end of the precondition — look for a missing && or ||.",
+
+				// --- the shape of the formula ---
+				E301: "There is text left over at the end of the formula — look for a missing operator such as && or ->.",
+				E302: "A cost operator is missing its bound in braces. MoAT can read Cost-LTL operators but cannot check them yet.",
+				E303: "A cost bound has to start with <, <=, > or >=. MoAT can read Cost-LTL operators but cannot check them yet.",
+				E304: "A cost bound's brace is never closed. MoAT can read Cost-LTL operators but cannot check them yet.",
+				E305: "Something is missing where MoAT expected a formula. Every operator needs a formula on each side, and atomic propositions have to be in single quotes, as in 'x > 0'.",
+				E306: "A parenthesis in the formula is never closed.",
+				E307: "AT has to be followed by a location in parentheses, as in 'AT(l0)'.",
+				E308: "AT(...) needs a location name inside it, as in 'AT(l0)'.",
+				E309: "The parenthesis after AT( is never closed.",
+				E310: "An atomic proposition is missing its closing quote.",
+
+				// --- the program, as text ---
+				E401: "The program has a closing parenthesis that matches no opening one.",
+				E402: "The program has a parenthesis that is never closed.",
+				E403: "The program has a quotation mark that is never closed.",
+				E404: "The program uses a character that cannot appear there.",
+
+				// --- the program, as declarations ---
+				E410: "A declaration in the program stops too early; something it needs is missing.",
+				E411: "A plain name was expected but a parenthesised expression appeared — for example (fun (l0) Int) instead of (fun l0 Int).",
+				E412: "A keyword in the program is not the one expected in that position; check its spelling.",
+				E413: "A declaration in the program holds more than its form allows.",
+				E420: "The program has a top-level entry that is not a fun, entrypoint or rule declaration.",
+				E421: "A location's type has to be Int or (-> Int … Int).",
+				E422: "A location's type (->) does not say what it returns; write (-> Int Int).",
+				E423: "The same location is declared twice with fun.",
+				E424: "The program declares more than one entrypoint, and it may have only one.",
+				E425: "The program has no entrypoint declaration; add one, as in (entrypoint l0).",
+				E426: "The entrypoint names a location that is never declared with fun.",
+				E430: "A rule uses a location that is never declared with fun.",
+				E431: "A rule uses the same variable twice on its left-hand side; every argument needs its own name.",
+				E432: "A rule carries a tag other than :guard or :cost.",
+				E440: "An arithmetic operator in the program has nothing to work on.",
+				E441: "A guard uses an operator MoAT does not know.",
+				E442: "Guards cannot use forall.",
+				E443: "An exists in a guard binds no variable.",
+
+				// --- putting the question together ---
+				E501: "MoAT can read Cost-LTL operators (FC, GC, UC, RC, UDC, RDC) but cannot check them yet. Use the plain operators X, F, G, U and R instead.",
+				E510: "The variable list is shorter than the formula needs. List the program's variables in order, as in “x y”.",
+				E511: "The formula uses a variable that the variable list does not mention. List the program's variables in order, using the names the formula uses.",
+				E520: "MoAT could not turn this formula into an automaton. A simpler formula may work.",
+			};
+
+			/** Codes that mean the server is at fault, not the submission. */
+			const SERVER_ERRORS = new Set(["E490", "E601", "E602", "E611", "E612", "E620", "E621"]);
+			const SERVER_ERROR_TEXT =
+				"The analysis server could not run MoAT. This is a problem with the server, not with your input — please try again later.";
+
+			const DEFAULT_ERROR = "MoAT could not analyze this input.";
 
 			const VERDICTS: Record<Verdict, { label: string; tone: string }> = {
 				// The palette of the Output section on /getting_started/.
@@ -749,8 +832,42 @@ const examples = [
 					case "timeout":
 						return "The analysis hit its time limit. A longer timeout may help.";
 					default:
-						return "MoAT could not analyze this input.";
+						return DEFAULT_ERROR;
 				}
+			}
+
+			/**
+			 * Which field a diagnostic is about.
+			 *
+			 * The codes for atoms and polynomials are shared between the
+			 * formula and the precondition, so a code alone cannot say where
+			 * the mistake is. MoAT names the field at the front of its message,
+			 * and that is the only part of the wording relied on here — and
+			 * only to add a lead-in, which is dropped when nothing matches.
+			 */
+			function fieldOf(message: string): string {
+				if (message.includes("--precondition")) return "In the precondition";
+				if (message.includes("cannot parse the LTL formula")) return "In the formula";
+				if (message.includes("cannot read '")) return "In the program";
+				return "";
+			}
+
+			/** The sentence shown for a failed run, and MoAT's own words for it. */
+			function describeError(result: CheckResult): { text: string; detail: string } {
+				const raw = (result.message ?? "").trim();
+				const code = result.error_code ?? "";
+
+				if (SERVER_ERRORS.has(code)) return { text: SERVER_ERROR_TEXT, detail: raw };
+
+				const known = ERRORS[code];
+				// An untagged failure, or a code newer than this page: MoAT's own
+				// message beats a vague stand-in, so it becomes the message.
+				if (!known) return { text: raw || DEFAULT_ERROR, detail: "" };
+
+				const where = fieldOf(raw);
+				const offset = raw.match(/at offset (\d+)/);
+				const position = offset ? ` (at position ${offset[1]})` : "";
+				return { text: where ? `${where}${position}: ${known}` : known, detail: raw };
 			}
 
 			// --- the formula editor -------------------------------------------
@@ -868,12 +985,10 @@ const examples = [
 				if (mode === "termination") return "";
 				const query = currentQuery();
 				if (!query.formula) return "Enter an LTL formula, or switch back to Termination.";
-				if (formulaField.value.includes(BICONDITIONAL) || query.formula.includes("<->")) {
-					return "MoAT has no biconditional. Write ↔ as two implications, for example ('a' -> 'b') && ('b' -> 'a').";
-				}
-				if (preconditionField.value.includes(BICONDITIONAL)) {
-					return "MoAT has no biconditional. Write ↔ as two implications in the precondition too.";
-				}
+				// Nothing else is judged here. MoAT's parser decides what is a
+				// formula, and reports the reason with a code this page turns
+				// into a sentence; second-guessing it would only risk refusing
+				// something MoAT accepts.
 				const names = query.variables ? query.variables.split(" ") : [];
 				const bad = names.find((name) => !/^[A-Za-z_][A-Za-z0-9_.]*$/.test(name));
 				if (bad) return `"${bad}" is not a variable name; write the list as a space-separated order.`;
@@ -943,10 +1058,13 @@ const examples = [
 				const shape = VERDICTS[verdict];
 				verdictBadge.className = `rounded-md px-2.5 py-1 font-mono text-xs font-semibold ${shape.tone}`;
 				verdictBadge.textContent = shape.label;
-				verdictText.textContent =
-					verdict === "error" && result.message
-						? result.message
-						: explain(verdict, query.formula === terminationFormula);
+				const failure = verdict === "error" ? describeError(result) : null;
+				verdictText.textContent = failure
+					? failure.text
+					: explain(verdict, query.formula === terminationFormula);
+				// Shown only when it adds something the sentence above does not.
+				detailLine.textContent = failure?.detail ?? "";
+				detailLine.classList.toggle("hidden", !failure?.detail);
 
 				const parts: string[] = [];
 				if (result.answer) parts.push(`MoAT answered “${result.answer}”`);
@@ -1097,6 +1215,41 @@ const examples = [
 				}
 			}
 
+			/**
+			 * Catches a service that answered a question other than the one
+			 * asked, and says so instead of showing its verdict.
+			 *
+			 * The formula, variables and precondition only became part of the
+			 * request recently. A service from before that drops the fields it
+			 * does not know and reports on plain termination instead — and its
+			 * answer looks perfectly ordinary. A program that terminates then
+			 * shows a confident **Yes** for a formula or precondition it never
+			 * read, including one MoAT would have rejected outright. Nothing
+			 * else on the page can tell that apart from a real answer, so it
+			 * has to be caught here, by comparing the query the service echoes
+			 * back with the one that was sent.
+			 */
+			function wrongQuestion(sent: Query, ran: Query | undefined): string {
+				// Naming the host makes this self-diagnosing: the usual cause is
+				// a page pointed at a different service than its author thinks,
+				// PUBLIC_MOAT_API_URL being unset during development.
+				const advice = ` The service at ${api || "this address"} needs updating; until then, run MoAT locally with the command below.`;
+				if (!ran) {
+					// Termination is what such a service checks anyway, so only
+					// a query of one's own is misreported.
+					return sent.formula === terminationFormula && !sent.precondition
+						? ""
+						: `The analysis server did not report which query it ran, so it is older than this page and ignores the formula and precondition: its answer would be about plain termination, not about what you asked.${advice}`;
+				}
+				const dropped = (["formula", "variables", "precondition"] as const).filter(
+					(field) => (ran[field] ?? "") !== sent[field]
+				);
+				if (dropped.length > 0) {
+					return `The analysis server ran a different query than the one submitted — the ${dropped.join(", ")} it used ${dropped.length > 1 ? "do" : "does"} not match. Its answer is not about what you asked.${advice}`;
+				}
+				return "";
+			}
+
 			async function poll(id: string, startedAt: number, query: Query) {
 				let response: Response;
 				try {
@@ -1124,6 +1277,11 @@ const examples = [
 				} else if (state.status === "done" && state.result) {
 					finish();
 					setStatus("");
+					const ignored = wrongQuestion(query, state.query);
+					if (ignored) {
+						showError(ignored, query);
+						return;
+					}
 					// The service echoes the query it ran; trust that over what
 					// the form holds now, which the user may have edited since.
 					showResult(state.result, state.query ?? query);
