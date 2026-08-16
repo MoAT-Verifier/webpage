@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Drives canonical URLs, sitemap, RSS, and Open Graph metadata.
+  # Drives canonical URLs, the sitemap, and Open Graph metadata.
   PUBLIC_SITE_URL: https://moat.verify.rwth-aachen.de
   # The analysis service the /interface/ page posts to, deployed from the
   # `webinterface` repository. Its MOAT_WEB_ALLOWED_ORIGINS must list

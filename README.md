@@ -18,6 +18,21 @@ pnpm dev        # http://127.0.0.1:5200
 ```bash
 pnpm build      # astro check && astro build -> dist/
 pnpm preview
+pnpm check      # biome: format and lint
+```
+
+### Running against a local analysis service
+
+The `/interface/` page talks to the analysis service from the
+[webinterface](https://github.com/MoAT-Verifier/webinterface) repository. To develop
+against a local one, run its image and point the site at it, in two terminals:
+
+```bash
+docker run --rm --pull always -p 8081:8080 --platform linux/amd64 ghcr.io/moat-verifier/moat-webinterface:latest
+```
+
+```bash
+PUBLIC_MOAT_API_URL=http://127.0.0.1:8081 pnpm dev
 ```
 
 ## Content
@@ -37,13 +52,13 @@ formulas, and benchmark numbers — in particular, the results table in
 `src/pages/evaluation.astro` is a transcription of the evaluation table in that paper.
 
 Site identity and metadata live in [`src/config/site.js`](src/config/site.js); the header
-navigation is [`src/collections/menu.json`](src/collections/menu.json).
+navigation is [`src/data/menu.json`](src/data/menu.json).
 
 ## Publications
 
 The publications page is generated from a BibTeX file. **To add a paper, add an entry to [`src/data/publications.bib`](src/data/publications.bib) and change nothing else.**
 
-[`src/lib/bibtex.ts`](src/lib/bibtex.ts) parses the file at build time and [`PublicationList.astro`](src/components/elements/PublicationList.astro) renders it, grouped by year (newest first, then `month`, then `sortkey`). Each abstract is
+[`src/lib/publications.ts`](src/lib/publications.ts) parses the file at build time and [`PublicationList.astro`](src/components/elements/PublicationList.astro) renders it, grouped by year (newest first, then `month`, then `sortkey`). Each abstract is
 collapsed behind a toggle, and only one is open at a time.
 
 | Field | Required | Notes |
@@ -80,5 +95,5 @@ record for `moat` in the `verify.rwth-aachen.de` zone.
 
 Built on the [ricoui-astro-starter](https://github.com/ricocc/ricoui-astro-starter) template
 (MIT), with its blog, DESIGN, and Elements demo pages removed and its multi-theme system
-reduced to the single Retro Blue palette. See [`docs/DESIGN.md`](docs/DESIGN.md) for the
+reduced to the single Retro Blue palette. See [`DESIGN.md`](DESIGN.md) for the
 palette, typography, and component rules.

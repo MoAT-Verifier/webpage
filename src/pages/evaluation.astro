@@ -1,6 +1,6 @@
 ---
-import Layout from "@/layouts/Layout.astro";
 import PageHeader from "@/components/elements/PageHeader.astro";
+import Layout from "@/layouts/Layout.astro";
 
 const tools = ["MoAT", "MuVal", "nuXmv", "Ultimate", "LTL-VerP"];
 
@@ -10,7 +10,8 @@ const rows = [
 		key: "RA",
 		name: "Reach-Avoid",
 		formula: "(F at(l_term)) ∧ (G (x ≥ 0))",
-		meaning: "the terminal location is reached and a negative value of x is avoided",
+		meaning:
+			"the terminal location is reached and a negative value of x is avoided",
 		results: [
 			{ yes: 65, no: 239, total: 304 },
 			{ yes: 44, no: 241, total: 285 },
@@ -85,7 +86,6 @@ const splitFormula = (formula: string) => formula.split(TEMPORAL);
 		/>
 
 		<div class="mx-auto max-w-5xl pb-8">
-			<!-- Setup -->
 			<section class="mb-14">
 				<h2 class="mb-5 font-brand text-3xl tracking-normal">Setup</h2>
 
@@ -115,7 +115,6 @@ const splitFormula = (formula: string) => formula.split(TEMPORAL);
 				</div>
 			</section>
 
-			<!-- Properties -->
 			<section class="mb-14">
 				<h2 class="mb-5 font-brand text-3xl tracking-normal">LTL properties</h2>
 				<p class="mb-6 text-base leading-relaxed text-neutral-700 dark:text-neutral-300">
@@ -152,7 +151,6 @@ const splitFormula = (formula: string) => formula.split(TEMPORAL);
 				</div>
 			</section>
 
-			<!-- Results table -->
 			<section class="mb-14">
 				<h2 class="mb-5 font-brand text-3xl tracking-normal">Results</h2>
 

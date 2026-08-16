@@ -1,33 +1,15 @@
 {
-	"name": "design-led-astro-starter",
+	"name": "moat-webpage",
 	"type": "module",
+	"private": true,
 	"version": "1.0.0",
 	"packageManager": "pnpm@9.14.2",
-	"description": "A clean, design-led Astro starter with Blog, DESIGN.md, Elements, Tailwind CSS v4, and MDX.",
-	"keywords": [
-		"astro",
-		"astro-template",
-		"astro-starter",
-		"starter",
-		"design-system",
-		"website-theme",
-		"tailwindcss",
-		"tailwindcss-v4",
-		"mdx",
-		"blog",
-		"dark-mode",
-		"responsive",
-		"typescript"
-	],
-	"author": "Template Maintainers",
+	"description": "Website for MoAT, a tool for LTL model checking of infinite state systems.",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ricocc/ricoui-astro-starter.git"
+		"url": "https://github.com/MoAT-Verifier/webpage.git"
 	},
-	"bugs": {
-		"url": "https://github.com/ricocc/ricoui-astro-starter/issues"
-	},
-	"homepage": "https://github.com/ricocc/ricoui-astro-starter#readme",
+	"homepage": "https://moat.verify.rwth-aachen.de/",
 	"license": "MIT",
 	"engines": {
 		"node": ">=22.12.0",
@@ -35,7 +17,6 @@
 	},
 	"scripts": {
 		"dev": "astro dev",
-		"start": "astro dev",
 		"build": "astro check && astro build",
 		"preview": "astro preview",
 		"astro": "astro",
@@ -44,19 +25,13 @@
 	"devDependencies": {
 		"@astrojs/check": "^0.9.10",
 		"@biomejs/biome": "1.7.3",
-		"@tailwindcss/typography": "^0.5.13",
 		"astro": "^7.1.5",
-		"postcss": "^8.4.31",
 		"tailwindcss": "^4.1.14",
-		"typescript": "^5.4.5",
-		"vite": "^7.3.3"
+		"typescript": "^5.4.5"
 	},
 	"dependencies": {
-		"@astrojs/mdx": "^7.0.5",
-		"@astrojs/rss": "^4.0.19",
 		"@astrojs/sitemap": "^3.7.3",
 		"@lucide/astro": "^1.27.0",
-		"@tailwindcss/vite": "^4.1.14",
-		"sharp": "^0.34.4"
+		"@tailwindcss/vite": "^4.1.14"
 	}
 }
