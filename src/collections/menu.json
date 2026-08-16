@@ -12,6 +12,10 @@
 		"url": "/getting_started/"
 	},
 	{
+		"name": "Web Interface",
+		"url": "/interface/"
+	},
+	{
 		"name": "Publications",
 		"url": "/publications/"
 	}

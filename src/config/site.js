@@ -19,6 +19,12 @@ export const siteConfig = {
 		image: `${SITE_URL}/assets/preview.jpg`,
 		twitterHandle: "",
 	},
+	// The analysis service behind /interface/, deployed from the
+	// `webinterface` repository. Set PUBLIC_MOAT_API_URL in the deploy
+	// workflow to point the page at a different host.
+	api: {
+		url: import.meta.env.PUBLIC_MOAT_API_URL || "https://moat-api.verify.rwth-aachen.de",
+	},
 	social: {
 		// TODO: point this at the MoAT tool repository once it is public.
 		github: "https://github.com/MoAT-Verifier",

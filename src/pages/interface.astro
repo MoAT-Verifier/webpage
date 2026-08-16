@@ -1,0 +1,551 @@
+---
+import PageHeader from "@/components/elements/PageHeader.astro";
+import Layout from "@/layouts/Layout.astro";
+import { siteConfig } from "@/config/site";
+import { CircleStop, FileUp, Info, Play, RotateCcw } from "@lucide/astro";
+
+// The service that actually runs MoAT lives in the `webinterface` repository
+// and is deployed separately; this page is static and talks to it over
+// fetch(). PUBLIC_MOAT_API_URL is set in the deploy workflow.
+const apiUrl = siteConfig.api.url;
+
+// The formula every submission is checked against. Stated here as text, and
+// confirmed by the server through /api/v1/info.
+const formula = "F 'AT(l_TERM)'";
+
+const examples = [
+	{
+		name: "Terminating loop",
+		summary: "while (x > 0) x = x - 1;",
+		program: `(format LCTRS)
+(theory Ints)
+(fun l0 (-> Int Int))
+(fun l1 (-> Int Int))
+(entrypoint l0)
+(rule (l0 Arg_0) (l1 Arg_0))
+(rule (l1 Arg_0) (l1 (- Arg_0 1)) :guard (> Arg_0 0))
+`,
+	},
+	{
+		name: "Non-terminating loop",
+		summary: "while (x > 0) x = x + 1;",
+		program: `(format LCTRS)
+(theory Ints)
+(fun l0 (-> Int Int))
+(fun l1 (-> Int Int))
+(entrypoint l0)
+(rule (l0 Arg_0) (l1 Arg_0))
+(rule (l1 Arg_0) (l1 (+ Arg_0 1)) :guard (> Arg_0 0))
+`,
+	},
+	{
+		name: "Nested loops",
+		summary: "The inner loop counts y down, the outer one x.",
+		program: `(format LCTRS)
+(theory Ints)
+(fun l0 (-> Int Int Int))
+(fun l1 (-> Int Int Int))
+(fun l2 (-> Int Int Int))
+(entrypoint l0)
+(rule (l0 Arg_0 Arg_1) (l1 Arg_0 Arg_1))
+(rule (l1 Arg_0 Arg_1) (l2 Arg_0 Arg_1) :guard (> Arg_0 0))
+(rule (l2 Arg_0 Arg_1) (l2 Arg_0 (- Arg_1 1)) :guard (> Arg_1 0))
+(rule (l2 Arg_0 Arg_1) (l1 (- Arg_0 1) Arg_1) :guard (<= Arg_1 0))
+`,
+	},
+];
+
+const cliCommand = `moat -i program.ari --ltl-formula="F 'AT(l_TERM)'" --variables=""`;
+---
+
+<Layout
+	title="Web Interface - MoAT"
+	description="Run MoAT's termination check on an integer transition system in the browser."
+	keywords="MoAT web interface, termination checker online, integer transition system, ARI format, LTL model checking"
+>
+	<main class="site-container">
+		<PageHeader
+			title="Web Interface"
+			description="Submit an integer transition system and let MoAT decide whether it terminates."
+		/>
+
+		<div class="mx-auto max-w-4xl pb-8">
+			<!-- What this does -->
+			<div
+				class="mb-10 flex gap-4 rounded-xl border border-dashed border-primary/30 bg-bg-secondary/50 p-5 dark:border-neutral-600 dark:bg-neutral-900/40"
+			>
+				<Info class="mt-0.5 h-5 w-5 flex-none text-primary dark:text-primary-light" />
+				<div class="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+					<p class="mb-1 font-semibold text-neutral-800 dark:text-neutral-100">
+						Every submission is checked against the single formula{" "}
+						<code class="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[13px] text-primary dark:bg-primary/20 dark:text-primary-light"
+							>{formula}</code
+						>.
+					</p>
+					<p>
+						It says that the designated termination location is eventually reached, so a verified
+						formula means the program terminates and a refuted one means it does not. Programs are
+						written in the <a
+							href="/getting_started/"
+							class="font-medium text-primary hover:underline dark:text-primary-light">ARI format</a
+						>; they run on a server at RWTH Aachen, in a scratch directory that is deleted when the
+						analysis ends.
+					</p>
+				</div>
+			</div>
+
+			<!-- Program -->
+			<form id="moat-form" data-api={apiUrl} novalidate>
+				<div
+					class="rounded-xl border border-primary/10 bg-bg-primary/50 p-5 dark:border-neutral-700 dark:bg-neutral-800/30"
+				>
+					<div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+						<div class="flex flex-wrap items-center gap-2">
+							<span class="mr-1 text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+								Examples
+							</span>
+							{examples.map((example, index) => (
+								<button
+									type="button"
+									class="example-btn rounded-lg border border-primary/20 bg-bg-secondary/60 px-3 py-1.5 text-xs font-medium text-neutral-700 transition-colors hover:border-primary hover:text-primary dark:border-neutral-600 dark:bg-neutral-800/60 dark:text-neutral-200 dark:hover:border-primary-light dark:hover:text-primary-light"
+									data-example={index}
+									title={example.summary}
+								>
+									{example.name}
+								</button>
+							))}
+						</div>
+						<div class="flex items-center gap-2">
+							<label
+								class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-primary/20 bg-bg-secondary/60 px-3 py-1.5 text-xs font-medium text-neutral-700 transition-colors hover:border-primary hover:text-primary dark:border-neutral-600 dark:bg-neutral-800/60 dark:text-neutral-200 dark:hover:border-primary-light dark:hover:text-primary-light"
+							>
+								<FileUp class="h-3.5 w-3.5" />
+								Upload
+								<input id="moat-file" type="file" accept=".ari,.txt" class="hidden" />
+							</label>
+							<button
+								type="button"
+								id="moat-reset"
+								class="inline-flex items-center gap-1.5 rounded-lg border border-primary/20 bg-bg-secondary/60 px-3 py-1.5 text-xs font-medium text-neutral-700 transition-colors hover:border-primary hover:text-primary dark:border-neutral-600 dark:bg-neutral-800/60 dark:text-neutral-200 dark:hover:border-primary-light dark:hover:text-primary-light"
+							>
+								<RotateCcw class="h-3.5 w-3.5" />
+								Reset
+							</button>
+						</div>
+					</div>
+
+					<label for="moat-program" class="sr-only">Program in ARI format</label>
+					<textarea
+						id="moat-program"
+						name="program"
+						rows="16"
+						spellcheck="false"
+						autocomplete="off"
+						autocapitalize="off"
+						autocorrect="off"
+						wrap="off"
+						class="w-full resize-y overflow-x-auto rounded-lg border border-primary/15 bg-white p-4 font-mono text-[13px] leading-relaxed text-neutral-800 outline-none transition-colors focus:border-primary/50 dark:border-neutral-700 dark:bg-neutral-950/60 dark:text-neutral-100 dark:focus:border-primary-light/50"
+					></textarea>
+
+					<div class="mt-4 flex flex-wrap items-end justify-between gap-4">
+						<div>
+							<label
+								for="moat-timeout"
+								class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-neutral-500 dark:text-neutral-400"
+							>
+								Timeout
+							</label>
+							<div class="flex items-center gap-2">
+								<input
+									id="moat-timeout"
+									type="number"
+									value="30"
+									min="10"
+									max="60"
+									step="5"
+									class="w-24 rounded-lg border border-primary/15 bg-white px-3 py-2 font-mono text-sm text-neutral-800 outline-none focus:border-primary/50 dark:border-neutral-700 dark:bg-neutral-950/60 dark:text-neutral-100"
+								/>
+								<span id="moat-timeout-hint" class="text-xs text-neutral-500 dark:text-neutral-400">
+									seconds
+								</span>
+							</div>
+						</div>
+						<p id="moat-size" class="text-xs text-neutral-500 dark:text-neutral-400"></p>
+					</div>
+				</div>
+
+				<!-- Actions -->
+				<div class="mt-5 flex flex-wrap items-center gap-3">
+					<button
+						type="submit"
+						id="moat-submit"
+						class="inline-flex items-center gap-2 rounded-xl bg-btn-primary px-5 py-3 text-sm font-medium text-btn-primary-text shadow-[0px_2px_3px_0_rgba(0,0,0,0.1)] transition duration-300 hover:-translate-y-0.5 hover:bg-btn-primary-hover disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 dark:bg-btn-primary-dark dark:hover:bg-btn-primary-dark-hover"
+					>
+						<Play class="h-4 w-4" />
+						Check termination
+					</button>
+					<button
+						type="button"
+						id="moat-cancel"
+						class="hidden items-center gap-2 rounded-xl border border-neutral-300 px-5 py-3 text-sm font-medium text-neutral-700 transition duration-300 hover:border-primary hover:text-primary dark:border-neutral-600 dark:text-neutral-200 dark:hover:border-primary-light dark:hover:text-primary-light"
+					>
+						<CircleStop class="h-4 w-4" />
+						Cancel
+					</button>
+					<p
+						id="moat-status"
+						role="status"
+						aria-live="polite"
+						class="text-sm text-neutral-500 dark:text-neutral-400"
+					>
+					</p>
+				</div>
+			</form>
+
+			<!-- Result -->
+			<section id="moat-result" class="mt-8 hidden">
+				<div
+					class="rounded-xl border border-primary/10 bg-bg-primary/50 p-5 dark:border-neutral-700 dark:bg-neutral-800/30"
+				>
+					<div class="flex flex-wrap items-center gap-3">
+						<span id="moat-verdict" class="rounded-md px-2.5 py-1 font-mono text-xs font-semibold"
+						></span>
+						<p id="moat-verdict-text" class="text-sm text-neutral-600 dark:text-neutral-300"></p>
+					</div>
+					<p id="moat-runtime" class="mt-3 text-xs text-neutral-500 dark:text-neutral-400"></p>
+					<details id="moat-output-wrapper" class="mt-4 hidden">
+						<summary
+							class="cursor-pointer text-sm font-medium text-primary hover:underline dark:text-primary-light"
+						>
+							Raw output
+						</summary>
+						<div class="mt-3 overflow-x-auto rounded-lg bg-neutral-900 p-4 dark:bg-neutral-950">
+							<pre
+								id="moat-output"
+								class="whitespace-pre font-mono text-[12.5px] leading-relaxed text-neutral-100"></pre>
+						</div>
+					</details>
+				</div>
+			</section>
+
+			<!-- Same run on the command line -->
+			<section class="mt-12">
+				<h2 class="mb-3 font-brand text-2xl tracking-normal">The same run locally</h2>
+				<p class="mb-4 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+					The web interface passes no options of its own beyond the timeout, so a local MoAT gives
+					the same answer for the same program:
+				</p>
+				<div class="overflow-x-auto rounded-lg bg-neutral-900 p-4 dark:bg-neutral-950">
+					<pre
+						class="whitespace-pre font-mono text-[12.5px] leading-relaxed text-neutral-100">{cliCommand}</pre>
+				</div>
+				<p class="mt-4 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+					For other properties &mdash; recurrence, reach-avoid, overflow &mdash; pass the formula and
+					its variables to MoAT directly; see <a
+						href="/getting_started/"
+						class="font-medium text-primary hover:underline dark:text-primary-light"
+						>Getting Started</a
+					>.
+				</p>
+			</section>
+		</div>
+	</main>
+
+	<script id="moat-examples" type="application/json" is:inline set:html={JSON.stringify(examples)}
+	></script>
+
+	<script>
+		type Verdict = "terminating" | "nonterminating" | "unknown" | "timeout" | "error";
+
+		interface CheckResult {
+			verdict: Verdict;
+			answer: string | null;
+			output: string;
+			truncated: boolean;
+			runtime_seconds: number;
+			message: string | null;
+		}
+
+		interface JobState {
+			id: string;
+			status: "queued" | "running" | "done" | "cancelled";
+			queue_position: number;
+			result: CheckResult | null;
+		}
+
+		const form = document.getElementById("moat-form") as HTMLFormElement | null;
+		if (form) {
+			const api = (form.dataset.api ?? "").replace(/\/$/, "");
+			const programField = document.getElementById("moat-program") as HTMLTextAreaElement;
+			const timeoutField = document.getElementById("moat-timeout") as HTMLInputElement;
+			const timeoutHint = document.getElementById("moat-timeout-hint") as HTMLElement;
+			const sizeHint = document.getElementById("moat-size") as HTMLElement;
+			const submitButton = document.getElementById("moat-submit") as HTMLButtonElement;
+			const cancelButton = document.getElementById("moat-cancel") as HTMLButtonElement;
+			const statusLine = document.getElementById("moat-status") as HTMLElement;
+			const resultPanel = document.getElementById("moat-result") as HTMLElement;
+			const verdictBadge = document.getElementById("moat-verdict") as HTMLElement;
+			const verdictText = document.getElementById("moat-verdict-text") as HTMLElement;
+			const runtimeLine = document.getElementById("moat-runtime") as HTMLElement;
+			const outputWrapper = document.getElementById("moat-output-wrapper") as HTMLDetailsElement;
+			const outputBlock = document.getElementById("moat-output") as HTMLElement;
+			const fileInput = document.getElementById("moat-file") as HTMLInputElement;
+
+			const examples = JSON.parse(
+				document.getElementById("moat-examples")?.textContent ?? "[]"
+			) as Array<{ name: string; program: string }>;
+
+			// Overwritten by /api/v1/info; these are only what the page shows
+			// before the server has answered.
+			let maxProgramBytes = 65536;
+			let apiAvailable = true;
+			let currentJob: string | null = null;
+			let poller: number | null = null;
+			let ticker: number | null = null;
+
+			const VERDICTS: Record<Verdict, { label: string; tone: string; text: string }> = {
+				terminating: {
+					label: "Terminating",
+					tone: "bg-green-500/10 text-green-600 dark:bg-green-400/10 dark:text-green-300",
+					text: "MoAT verified the formula: every run reaches the termination location.",
+				},
+				nonterminating: {
+					label: "Non-terminating",
+					tone: "bg-red-500/10 text-red-500 dark:bg-red-400/10 dark:text-red-300",
+					text: "MoAT refuted the formula: there is a run that never terminates.",
+				},
+				unknown: {
+					label: "Unknown",
+					tone: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light",
+					text: "Neither backend reached a conclusion. Termination is undecidable in general, so this is a possible outcome for any program.",
+				},
+				timeout: {
+					label: "Timeout",
+					tone: "bg-amber-500/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-300",
+					text: "The analysis hit its time limit. A longer timeout may help.",
+				},
+				error: {
+					label: "Error",
+					tone: "bg-red-500/10 text-red-500 dark:bg-red-400/10 dark:text-red-300",
+					text: "MoAT could not analyze this input.",
+				},
+			};
+
+			const byteLength = (text: string) => new TextEncoder().encode(text).length;
+
+			function updateSize() {
+				const size = byteLength(programField.value);
+				const overLimit = size > maxProgramBytes;
+				sizeHint.textContent = `${size.toLocaleString()} of ${maxProgramBytes.toLocaleString()} bytes`;
+				// Inline, so it wins over the element's own text colour without
+				// depending on the order Tailwind emits the two utilities in.
+				sizeHint.style.color = overLimit ? "#ef4444" : "";
+				submitButton.disabled = !apiAvailable || overLimit || programField.value.trim() === "";
+			}
+
+			function setStatus(message: string) {
+				statusLine.textContent = message;
+			}
+
+			function showResult(result: CheckResult) {
+				const shape = VERDICTS[result.verdict] ?? VERDICTS.error;
+				verdictBadge.className = `rounded-md px-2.5 py-1 font-mono text-xs font-semibold ${shape.tone}`;
+				verdictBadge.textContent = shape.label;
+				verdictText.textContent =
+					result.verdict === "error" && result.message ? result.message : shape.text;
+
+				const parts: string[] = [];
+				if (result.answer) parts.push(`MoAT answered “${result.answer}”`);
+				if (result.runtime_seconds) parts.push(`${result.runtime_seconds.toFixed(1)} s`);
+				if (result.truncated) parts.push("output truncated");
+				runtimeLine.textContent = parts.join(" · ");
+
+				const output = (result.output ?? "").trim();
+				outputWrapper.classList.toggle("hidden", output === "");
+				outputBlock.textContent = output;
+				resultPanel.classList.remove("hidden");
+			}
+
+			function showError(message: string) {
+				showResult({
+					verdict: "error",
+					answer: null,
+					output: "",
+					truncated: false,
+					runtime_seconds: 0,
+					message,
+				});
+			}
+
+			function stopPolling() {
+				if (poller !== null) window.clearInterval(poller);
+				if (ticker !== null) window.clearInterval(ticker);
+				poller = null;
+				ticker = null;
+			}
+
+			function finish() {
+				stopPolling();
+				currentJob = null;
+				submitButton.disabled = false;
+				cancelButton.classList.add("hidden");
+				cancelButton.classList.remove("inline-flex");
+				updateSize();
+			}
+
+			async function detailOf(response: Response, fallback: string) {
+				try {
+					const body = await response.json();
+					return typeof body.detail === "string" ? body.detail : fallback;
+				} catch {
+					return fallback;
+				}
+			}
+
+			async function loadInfo() {
+				try {
+					const response = await fetch(`${api}/api/v1/info`);
+					if (!response.ok) throw new Error(String(response.status));
+					const info = await response.json();
+					const limits = info.limits;
+					maxProgramBytes = limits.max_program_bytes;
+					timeoutField.min = String(limits.min_timeout);
+					timeoutField.max = String(limits.max_timeout);
+					timeoutField.value = String(limits.default_timeout);
+					timeoutHint.textContent = `seconds (${limits.min_timeout}–${limits.max_timeout})`;
+					apiAvailable = true;
+					updateSize();
+				} catch {
+					// Keep the page useful while the backend is down: the program
+					// stays editable and the local command line is below.
+					apiAvailable = false;
+					updateSize();
+					setStatus(
+						"The analysis server is currently unavailable. You can still run MoAT locally — see the command below."
+					);
+				}
+			}
+
+			async function poll(id: string, startedAt: number) {
+				let response: Response;
+				try {
+					response = await fetch(`${api}/api/v1/jobs/${id}`);
+				} catch {
+					finish();
+					showError("Lost contact with the analysis server.");
+					return;
+				}
+				if (!response.ok) {
+					finish();
+					showError(await detailOf(response, "The analysis job could not be retrieved."));
+					return;
+				}
+
+				const state = (await response.json()) as JobState;
+				const elapsed = Math.round((Date.now() - startedAt) / 1000);
+				if (state.status === "queued") {
+					setStatus(`Queued, position ${state.queue_position}…`);
+				} else if (state.status === "running") {
+					setStatus(`Running MoAT… ${elapsed} s`);
+				} else if (state.status === "cancelled") {
+					finish();
+					setStatus("Cancelled.");
+				} else if (state.status === "done" && state.result) {
+					finish();
+					setStatus("");
+					showResult(state.result);
+				}
+			}
+
+			form.addEventListener("submit", async (event) => {
+				event.preventDefault();
+				if (currentJob) return;
+
+				resultPanel.classList.add("hidden");
+				submitButton.disabled = true;
+				setStatus("Submitting…");
+
+				let response: Response;
+				try {
+					response = await fetch(`${api}/api/v1/check`, {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							program: programField.value,
+							timeout: Number(timeoutField.value),
+						}),
+					});
+				} catch {
+					finish();
+					setStatus("");
+					showError("Could not reach the analysis server.");
+					return;
+				}
+
+				if (!response.ok) {
+					finish();
+					setStatus("");
+					showError(await detailOf(response, "The submission was rejected."));
+					return;
+				}
+
+				const job = await response.json();
+				currentJob = job.id;
+				cancelButton.classList.remove("hidden");
+				cancelButton.classList.add("inline-flex");
+
+				const startedAt = Date.now();
+				setStatus("Queued…");
+				// Poll on a fixed cadence rather than a backoff: runs are bounded
+				// by the timeout, so there is nothing long to back off from.
+				poller = window.setInterval(() => poll(job.id, startedAt), 700);
+				poll(job.id, startedAt);
+			});
+
+			cancelButton.addEventListener("click", async () => {
+				if (!currentJob) return;
+				const id = currentJob;
+				stopPolling();
+				setStatus("Cancelling…");
+				try {
+					await fetch(`${api}/api/v1/jobs/${id}`, { method: "DELETE" });
+				} catch {
+					/* the job dies with its timeout anyway */
+				}
+				finish();
+				setStatus("Cancelled.");
+			});
+
+			for (const button of document.querySelectorAll<HTMLButtonElement>(".example-btn")) {
+				button.addEventListener("click", () => {
+					const example = examples[Number(button.dataset.example)];
+					if (example) {
+						programField.value = example.program;
+						updateSize();
+					}
+				});
+			}
+
+			document.getElementById("moat-reset")?.addEventListener("click", () => {
+				programField.value = examples[0]?.program ?? "";
+				resultPanel.classList.add("hidden");
+				setStatus("");
+				updateSize();
+			});
+
+			fileInput.addEventListener("change", async () => {
+				const file = fileInput.files?.[0];
+				if (!file) return;
+				programField.value = await file.text();
+				fileInput.value = "";
+				updateSize();
+			});
+
+			programField.addEventListener("input", updateSize);
+
+			programField.value = examples[0]?.program ?? "";
+			updateSize();
+			loadInfo();
+		}
+	</script>
+</Layout>

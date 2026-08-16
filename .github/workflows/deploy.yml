@@ -19,6 +19,10 @@ concurrency:
 env:
   # Drives canonical URLs, sitemap, RSS, and Open Graph metadata.
   PUBLIC_SITE_URL: https://moat.verify.rwth-aachen.de
+  # The analysis service the /interface/ page posts to, deployed from the
+  # `webinterface` repository. Its MOAT_WEB_ALLOWED_ORIGINS must list
+  # PUBLIC_SITE_URL, or the browser blocks the request.
+  PUBLIC_MOAT_API_URL: https://moat-api.verify.rwth-aachen.de
 
 jobs:
   build:
